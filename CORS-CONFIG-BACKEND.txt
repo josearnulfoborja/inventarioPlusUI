@@ -1,0 +1,106 @@
+// ============================================
+// CONFIGURACIÓN CORS PARA SPRING BOOT
+// ============================================
+// 
+// Este archivo contiene la configuración necesaria para permitir
+// peticiones desde Angular (puerto 4200) al backend Spring Boot (puerto 8080)
+//
+// INSTRUCCIONES:
+// 1. Crea este archivo en tu proyecto Spring Boot:
+//    src/main/java/com/tuapp/config/CorsConfig.java
+//
+// 2. Ajusta el package según tu estructura de proyecto
+//
+// 3. Reinicia tu aplicación Spring Boot
+//
+// ============================================
+
+package com.tuapp.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+
+@Configuration
+public class CorsConfig {
+
+    @Bean
+    public CorsFilter corsFilter() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+        
+        // Permitir credenciales (cookies, authorization headers, etc.)
+        config.setAllowCredentials(true);
+        
+        // Permitir peticiones desde Angular en desarrollo
+        config.addAllowedOrigin("http://localhost:4200");
+        
+        // Para producción, agrega también:
+        // config.addAllowedOrigin("https://tu-dominio-produccion.com");
+        
+        // Permitir todos los headers
+        config.addAllowedHeader("*");
+        
+        // Permitir todos los métodos HTTP (GET, POST, PUT, DELETE, etc.)
+        config.addAllowedMethod("*");
+        
+        // Aplicar configuración a todas las rutas que empiecen con /api/
+        source.registerCorsConfiguration("/api/**", config);
+        
+        return new CorsFilter(source);
+    }
+}
+
+
+// ============================================
+// ALTERNATIVA MÁS SIMPLE (Solo para desarrollo)
+// ============================================
+//
+// Si prefieres algo más rápido, agrega esta anotación
+// en tu RolController:
+//
+// @RestController
+// @RequestMapping("/api/roles")
+// @CrossOrigin(origins = "http://localhost:4200")  // ← Agregar esta línea
+// public class RolController {
+//     // ... tu código
+// }
+//
+// ⚠️ NOTA: Esta configuración solo permite CORS para ese controller.
+//    La configuración con CorsConfig aplica para TODOS los endpoints.
+// ============================================
+
+
+// ============================================
+// VERIFICACIÓN
+// ============================================
+//
+// Después de configurar CORS, verifica que funcione:
+//
+// 1. Inicia tu backend Spring Boot (puerto 8080)
+// 2. Inicia tu frontend Angular: npm start (puerto 4200)
+// 3. Abre http://localhost:4200/roles
+// 4. Abre las DevTools del navegador (F12)
+// 5. Ve a la pestaña Network
+// 6. Deberías ver peticiones a http://localhost:8080/api/roles
+//    sin errores de CORS
+//
+// ============================================
+
+
+// ============================================
+// TROUBLESHOOTING
+// ============================================
+//
+// Si sigues teniendo errores:
+//
+// 1. Verifica que el backend esté corriendo en puerto 8080
+// 2. Verifica que la ruta sea /api/roles (no /roles)
+// 3. Limpia el caché del navegador (Ctrl + Shift + Delete)
+// 4. Verifica los logs de Spring Boot para ver si llegan las peticiones
+// 5. Prueba con Postman o curl:
+//    curl http://localhost:8080/api/roles
+//
+// ============================================

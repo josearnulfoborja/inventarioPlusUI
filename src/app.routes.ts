@@ -37,6 +37,11 @@ export const appRoutes: Routes = [
                 data: { breadcrumb: 'Usuarios' }
             },
             {
+                path: 'roles',
+                loadComponent: () => import('@/pages/usuarios/roles.component').then((c) => c.RolesComponent),
+                data: { breadcrumb: 'Roles' }
+            },
+            {
                 path: 'reportes',
                 loadComponent: () => import('@/pages/reportes/reportes').then((c) => c.Reportes),
                 data: { breadcrumb: 'Reportes' }

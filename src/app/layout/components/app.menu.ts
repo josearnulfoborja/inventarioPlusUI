@@ -42,6 +42,11 @@ export class AppMenu {
                     label: 'Usuarios',
                     icon: 'pi pi-user',
                     routerLink: ['/usuarios']
+                },
+                {
+                    label: 'Roles',
+                    icon: 'pi pi-shield',
+                    routerLink: ['/roles']
                 }
             ]
         },
