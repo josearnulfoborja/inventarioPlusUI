@@ -1,0 +1,116 @@
+# ----- Node / Angular -----
+node_modules/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json*
+yarn.lock*
+pnpm-lock.yaml*
+
+# Angular build outputs
+/dist/
+/.angular/
+/.angular/cache/
+/tmp/
+/out-tsc/
+
+# Environment files (keep local secrets out of git)
+*.local
+*.env
+*.env.*
+.env
+.env.*.local
+
+# IDEs and Editors
+.idea/
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
+
+# OS specific
+.DS_Store
+Thumbs.db
+$RECYCLE.BIN/
+Desktop.ini
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Coverage and reports
+coverage/
+/.nyc_output
+/.sonar/
+/.scannerwork/
+
+# TypeScript
+*.tsbuildinfo
+
+# Sass / CSS build artifacts
+*.css.map
+*.scssc
+
+# Cache
+/.cache/
+.cache/
+/.parcel-cache/
+
+# Storybook
+storybook-static/
+
+# Cypress / Playwright
+cypress/videos/
+cypress/screenshots/
+playwright-report/
+blob-report/
+trace.zip
+
+# VSCode test outputs
+.vscode-test/
+
+# Vercel / Deployment
+.vercel/
+
+# Local assets or temp
+/tmp/
+~$*
+
+# Firebase / GCP (if used)
+.firebase/
+.firebaserc.local
+
+# Azure (if used)
+/.azure/**
+!/.azure/README.md
+
+# Environment-specific config
+vercel.json.local
+
+# Git merge backups
+*.orig
+
+# Intl tools
+/.fleet/
+
+# Lock screenshots or design files
+*.sketch
+*.fig
+*.xd
+
+# Optional: Ignore generated public files except committed assets
+public/**/*.map
+public/**/*.tmp
+public/**/*.bak
+
+# PrimeNG/Theme caches (if any)
+/.sass-cache/
+
+# End of file
