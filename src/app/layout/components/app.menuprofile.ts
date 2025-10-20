@@ -21,26 +21,8 @@ import { Subscription } from 'rxjs';
         </button>
 
         <ul *ngIf="menuProfileActive()" [@menu]="isHorizontal() ? 'overlay' : 'inline'">
-            <li pTooltip="Settings" [tooltipDisabled]="isTooltipDisabled()" [routerLink]="['/profile/create']">
-                <button [routerLink]="['/documentation']">
-                    <i class="pi pi-cog pi-fw"></i>
-                    <span>Settings</span>
-                </button>
-            </li>
-            <li pTooltip="Profile" [tooltipDisabled]="isTooltipDisabled()">
-                <button [routerLink]="['/documentation']">
-                    <i class="pi pi-file-o pi-fw"></i>
-                    <span>Profile</span>
-                </button>
-            </li>
-            <li pTooltip="Support" [tooltipDisabled]="isTooltipDisabled()">
-                <button [routerLink]="['/documentation']">
-                    <i class="pi pi-compass pi-fw"></i>
-                    <span>Support</span>
-                </button>
-            </li>
-            <li pTooltip="Logout" [tooltipDisabled]="isTooltipDisabled()" [routerLink]="['/auth/login2']">
-                <button class="p-link">
+            <li class="mt-2" pTooltip="Logout" [tooltipDisabled]="isTooltipDisabled()">
+                <button class="p-link" [routerLink]="['/auth/login2']">
                     <i class="pi pi-power-off pi-fw"></i>
                     <span>Logout</span>
                 </button>

@@ -12,6 +12,36 @@ export const appRoutes: Routes = [
                 data: { breadcrumb: 'E-Commerce Dashboard' }
             },
             {
+                path: 'clientes',
+                loadComponent: () => import('@/pages/clientes/clientes').then((c) => c.Clientes),
+                data: { breadcrumb: 'Clientes' }
+            },
+            {
+                path: 'equipos',
+                loadComponent: () => import('@/pages/equipos/equipos').then((c) => c.Equipos),
+                data: { breadcrumb: 'Equipos' }
+            },
+            {
+                path: 'prestamos',
+                loadComponent: () => import('@/pages/prestamos/prestamos').then((c) => c.Prestamos),
+                data: { breadcrumb: 'Préstamos' }
+            },
+            {
+                path: 'evaluaciones',
+                loadComponent: () => import('@/pages/evaluaciones/evaluaciones').then((c) => c.Evaluaciones),
+                data: { breadcrumb: 'Evaluaciones' }
+            },
+            {
+                path: 'usuarios',
+                loadComponent: () => import('@/pages/usuarios/usuarios').then((c) => c.Usuarios),
+                data: { breadcrumb: 'Usuarios' }
+            },
+            {
+                path: 'reportes',
+                loadComponent: () => import('@/pages/reportes/reportes').then((c) => c.Reportes),
+                data: { breadcrumb: 'Reportes' }
+            },
+            {
                 path: 'dashboard-banking',
                 loadComponent: () => import('@/pages/dashboards/bankingdashboard').then((c) => c.BankingDashboard),
                 data: { breadcrumb: 'Banking Dashboard' }
