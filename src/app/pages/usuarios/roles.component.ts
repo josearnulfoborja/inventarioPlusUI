@@ -140,12 +140,8 @@ export class RolesComponent implements OnInit {
         this.error = null;
 
         this.rolService.listarRoles().subscribe({
-            next: (response) => {
-                if (response.success) {
-                    this.roles = response.data;
-                } else {
-                    this.error = 'No se pudieron cargar los roles';
-                }
+            next: (roles) => {
+                this.roles = roles;
                 this.isLoading = false;
             },
             error: (err: ApiError) => {
@@ -174,11 +170,9 @@ Descripción: ${rol.descripcion || 'Sin descripción'}
             };
 
             this.rolService.crearRol(nuevoRol).subscribe({
-                next: (response) => {
-                    if (response.success) {
-                        alert('Rol creado exitosamente');
-                        this.cargarRoles();
-                    }
+                next: () => {
+                    alert('Rol creado exitosamente');
+                    this.cargarRoles();
                 },
                 error: (err: ApiError) => alert(`Error: ${err.message}`)
             });
@@ -196,11 +190,9 @@ Descripción: ${rol.descripcion || 'Sin descripción'}
             };
 
             this.rolService.actualizarRol(rol.id!, rolActualizado).subscribe({
-                next: (response) => {
-                    if (response.success) {
-                        alert('Rol actualizado exitosamente');
-                        this.cargarRoles();
-                    }
+                next: () => {
+                    alert('Rol actualizado exitosamente');
+                    this.cargarRoles();
                 },
                 error: (err: ApiError) => alert(`Error: ${err.message}`)
             });
@@ -210,11 +202,9 @@ Descripción: ${rol.descripcion || 'Sin descripción'}
     eliminarRol(id: number): void {
         if (confirm('¿Está seguro de eliminar este rol? Esta acción no se puede deshacer.')) {
             this.rolService.eliminarRol(id).subscribe({
-                next: (response) => {
-                    if (response.success) {
-                        alert('Rol eliminado exitosamente');
-                        this.cargarRoles();
-                    }
+                next: () => {
+                    alert('Rol eliminado exitosamente');
+                    this.cargarRoles();
                 },
                 error: (err: ApiError) => alert(`Error: ${err.message}`)
             });
