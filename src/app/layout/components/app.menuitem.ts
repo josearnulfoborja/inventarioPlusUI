@@ -26,6 +26,9 @@ import { RippleModule } from 'primeng/ripple';
                 (mouseenter)="onMouseEnter()"
                 [ngClass]="item.class"
                 [attr.target]="item.target"
+                [routerLink]="item.routerLink"
+                routerLinkActive="active-route"
+                [routerLinkActiveOptions]="item.routerLinkActiveOptions || { paths: 'exact', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored' }"
                 tabindex="0"
                 pRipple
                 [pTooltip]="item.label"
@@ -224,6 +227,16 @@ export class AppMenuitem implements OnInit, OnDestroy {
 
             if (this.root && this.active && (this.isSlim || this.isHorizontal || this.isSlimPlus)) {
                 this.layoutService.onOverlaySubmenuOpen();
+            }
+            // If the item has a routerLink as well as child items, navigate to it
+            if (this.item.routerLink) {
+                try {
+                    // routerLink can be array or string
+                    const link = Array.isArray(this.item.routerLink) ? this.item.routerLink : [this.item.routerLink];
+                    this.router.navigate(link as any);
+                } catch (e) {
+                    // ignore navigation errors
+                }
             }
         } else {
             if (this.layoutService.isMobile()) {

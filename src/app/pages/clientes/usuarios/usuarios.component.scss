@@ -1,0 +1,41 @@
+.usuarios-list {
+    /* estilos base para la interfaz de usuarios */
+}
+
+.usuario-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 8px 0 0 0;
+    margin-top: 8px;
+    z-index: 20;
+    box-shadow: 0 -6px 10px rgba(0,0,0,0.03);
+}
+
+.fixed-save-bar {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    gap: 8px;
+    background: rgba(255,255,255,0.95);
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    z-index: 99999;
+}

@@ -13,8 +13,20 @@ export const appRoutes: Routes = [
             },
             {
                 path: 'clientes',
+                data: { breadcrumb: 'Clientes' },
                 loadComponent: () => import('@/pages/clientes/clientes').then((c) => c.Clientes),
-                data: { breadcrumb: 'Clientes' }
+                children: [
+                    {
+                        path: '',
+                        loadComponent: () => import('@/pages/clientes/usuarios/usuarios.component').then((c) => c.UsuariosComponent),
+                        data: { breadcrumb: 'Usuarios' }
+                    },
+                    {
+                        path: 'usuarios',
+                        loadComponent: () => import('@/pages/clientes/usuarios/usuarios.component').then((c) => c.UsuariosComponent),
+                        data: { breadcrumb: 'Usuarios' }
+                    }
+                ]
             },
             {
                 path: 'equipos',
