@@ -55,6 +55,17 @@ export interface Prestamo {
     usuarioRegistroId?: number;
     garantia?: string;
     montoGarantia?: number;
+    // Campos adicionales para compatibilidad con la tabla Prestamos
+    condicion_al_prestar?: string;
+    condicion_al_devolver?: string;
+    inspeccion_requerida?: string;
+    inspeccion_realizada?: string;
+    especialista_asignado_id?: number;
+    fecha_inspeccion_programada?: Date;
+    estado_inspeccion?: string;
+    observaciones_inspeccion?: string;
+    fecha_creacion?: Date;
+    fecha_actualizacion?: Date;
 }
 
 /**
