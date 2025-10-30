@@ -11,7 +11,7 @@ export interface Cliente {
     ciudad?: string;
     estado?: string;
     codigoPostal?: string;
-    tipoDocumento: 'DNI' | 'RUC' | 'PASAPORTE' | 'OTRO';
+    tipoDocumento: 'DUI' | 'RUC' | 'PASAPORTE' | 'OTRO';
     numeroDocumento: string;
     fechaRegistro?: Date;
     activo: boolean;
@@ -42,30 +42,34 @@ export interface Equipo {
  * Modelo para Préstamo
  */
 export interface Prestamo {
-    id?: number;
-    clienteId: number;
-    cliente?: Cliente;
-    equipoId: number;
-    equipo?: Equipo;
-    fechaPrestamo: Date;
-    fechaDevolucionEstimada: Date;
-    fechaDevolucionReal?: Date;
-    estado: 'ACTIVO' | 'DEVUELTO' | 'VENCIDO' | 'CANCELADO';
-    observaciones?: string;
-    usuarioRegistroId?: number;
-    garantia?: string;
-    montoGarantia?: number;
-    // Campos adicionales para compatibilidad con la tabla Prestamos
-    condicion_al_prestar?: string;
-    condicion_al_devolver?: string;
-    inspeccion_requerida?: string;
-    inspeccion_realizada?: string;
-    especialista_asignado_id?: number;
-    fecha_inspeccion_programada?: Date;
-    estado_inspeccion?: string;
-    observaciones_inspeccion?: string;
-    fecha_creacion?: Date;
-    fecha_actualizacion?: Date;
+    idPrestamo: number;
+    fechaEntrega: string;
+    fechaDevolucion: string;
+    fechaPrevista: string;
+    costoTotal: number;
+    estadoPrestamo: string;
+    cliente: Cliente;
+    equipo: Equipo;
+    especialista: Especialista;
+}
+
+export interface Cliente {
+    idCliente: number;
+    nombre: string;
+    apellido: string;
+    // ...otros campos relevantes
+}
+
+export interface Equipo {
+    idEquipo: number;
+    nombre: string;
+    // ...otros campos relevantes
+}
+
+export interface Especialista {
+    idEspecialista: number;
+    nombre: string;
+    // ...otros campos relevantes
 }
 
 /**
