@@ -28,7 +28,7 @@ export const appRoutes: Routes = [
             },
             {
                 path: 'evaluaciones',
-                loadComponent: () => import('@/pages/evaluaciones/evaluaciones').then((c) => c.Evaluaciones),
+                loadComponent: () => import('@/pages/evaluaciones/evaluaciones').then((c) => c.EvaluacionesComponent),
                 data: { breadcrumb: 'Evaluaciones' }
             },
             {

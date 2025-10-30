@@ -1,0 +1,22 @@
+<form (ngSubmit)="onSubmit()" style="display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 480px; margin: 0 auto;">
+  <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+    <label style="font-weight: 500; color: #222;">Observaciones:</label>
+    <textarea [(ngModel)]="modelo.observaciones" name="observaciones" required style="resize: vertical; min-height: 60px; padding: 8px; border-radius: 6px; border: 1px solid #e5e7eb; font-size: 1rem; width: 100%;"></textarea>
+  </div>
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <label style="font-weight: 500; color: #222;">Aprobado:</label>
+    <input type="checkbox" [(ngModel)]="modelo.aprobado" name="aprobado" style="width: 18px; height: 18px;">
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+    <label style="font-weight: 500; color: #222;">ID Equipo:</label>
+    <input type="number" [(ngModel)]="modelo.equipo.idEquipo" name="idEquipo" required style="padding: 8px; border-radius: 6px; border: 1px solid #e5e7eb; font-size: 1rem; width: 100%;">
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+    <label style="font-weight: 500; color: #222;">ID Usuario:</label>
+    <input type="number" [(ngModel)]="modelo.usuario.idUsuario" name="idUsuario" required style="padding: 8px; border-radius: 6px; border: 1px solid #e5e7eb; font-size: 1rem; width: 100%;">
+  </div>
+  <div style="display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap;">
+    <button type="submit" style="background: #22c55e; color: #fff; border: none; border-radius: 4px; padding: 8px 18px; font-size: 1rem; cursor: pointer;">{{ esEdicion ? 'Actualizar' : 'Crear' }}</button>
+    <button type="button" style="background: #64748b; color: #fff; border: none; border-radius: 4px; padding: 8px 18px; font-size: 1rem; cursor: pointer;" (click)="cancelar.emit()">Cancelar</button>
+  </div>
+</form>

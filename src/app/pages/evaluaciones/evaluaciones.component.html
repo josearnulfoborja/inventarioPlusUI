@@ -1,0 +1,51 @@
+<div class="card">
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <div class="card" style="border-radius: 8px; box-shadow: 0 2px 8px #e0e7ef; border: 1px solid #e5e7eb; background: #fff; width: 200%; max-width: 250%; margin: 0;">
+          <div class="card-header" style="padding: 18px 24px 8px 24px; border-bottom: 1px solid #e5e7eb; background: #f8fafc;">
+            <h2 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 4px; color: #222">Gestión de Evaluaciones Técnicas</h2>
+            <button (click)="nuevaEvaluacion()" style="background: #2563eb; color: #fff; border: none; border-radius: 4px; padding: 6px 16px; font-size: 0.95rem; margin-bottom: 8px; cursor: pointer;">+ Nueva Evaluación</button>
+          </div>
+          <div class="card-body" style="padding: 18px 24px; width: 100%;">
+            <table style="width: 100%; min-width: 600px; border-collapse: collapse; background: #fff;">
+              <thead>
+                <tr style="background: #f1f5f9;">
+                  <th style="padding: 10px 8px; font-weight: 700; color: #222; border-bottom: 1px solid #e5e7eb; text-align: left;">ID</th>
+                  <th style="padding: 10px 8px; font-weight: 700; color: #222; border-bottom: 1px solid #e5e7eb; text-align: left;">Observaciones</th>
+                  <th style="padding: 10px 8px; font-weight: 700; color: #222; border-bottom: 1px solid #e5e7eb; text-align: left;">Aprobado</th>
+                  <th style="padding: 10px 8px; font-weight: 700; color: #222; border-bottom: 1px solid #e5e7eb; text-align: left;">Equipo</th>
+                  <th style="padding: 10px 8px; font-weight: 700; color: #222; border-bottom: 1px solid #e5e7eb; text-align: left;">Usuario</th>
+                  <th style="padding: 10px 8px; font-weight: 700; color: #222; border-bottom: 1px solid #e5e7eb; text-align: left;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="evaluaciones.length === 0">
+                  <td colspan="6" style="text-align:center; color: #888; padding: 24px 0; font-size: 1rem;">No se encontraron evaluaciones</td>
+                </tr>
+                <tr *ngFor="let eval of evaluaciones" style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 10px 8px; color: #222;">{{ eval.idEvaluacion }}</td>
+                  <td style="padding: 10px 8px; color: #222;">{{ eval.observaciones }}</td>
+                  <td style="padding: 10px 8px; color: #222;">{{ eval.aprobado ? 'Sí' : 'No' }}</td>
+                  <td style="padding: 10px 8px; color: #222;">{{ eval.equipo.nombre || eval.equipo.idEquipo }}</td>
+                  <td style="padding: 10px 8px; color: #222;">{{ eval.usuario.nombre || eval.usuario.idUsuario }}</td>
+                  <td style="padding: 10px 8px;">
+                    <button (click)="editarEvaluacion(eval)" style="background: #fbbf24; color: #222; border: none; border-radius: 4px; padding: 4px 10px; font-size: 0.95rem; margin-right: 4px; cursor: pointer;">Editar</button>
+                    <button (click)="eliminarEvaluacion(eval.idEvaluacion!)" style="background: #ef4444; color: #fff; border: none; border-radius: 4px; padding: 4px 10px; font-size: 0.95rem; cursor: pointer;">Eliminar</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="margin-top: 12px; color: #888; font-size: 15px; text-align: left;">
+              Total de evaluaciones: {{ evaluaciones.length }}
+            </div>
+            <div *ngIf="mostrarFormulario" style="margin-top: 24px;">
+              <app-evaluacion-form
+                [evaluacion]="seleccionada"
+                [esEdicion]="esEdicion"
+                (guardar)="guardarEvaluacion($event)"
+                (cancelar)="mostrarFormulario = false">
+              </app-evaluacion-form>
+            </div>
+          </div>
+        </div>
