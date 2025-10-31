@@ -31,11 +31,10 @@ export const appRoutes: Routes = [
                 loadComponent: () => import('@/pages/evaluaciones/evaluaciones').then((c) => c.EvaluacionesComponent),
                 data: { breadcrumb: 'Evaluaciones' }
             },
-            {
-                path: 'usuarios',
-                loadComponent: () => import('@/pages/usuarios/usuarios').then((c) => c.Usuarios),
-                data: { breadcrumb: 'Usuarios' }
-            },
+                {
+                    path: 'usuarios',
+                    loadComponent: () => import('src/app/pages/usuarios/usuarios.component').then(m => m.UsuariosComponent)
+                },
             {
                 path: 'roles',
                 loadComponent: () => import('@/pages/usuarios/roles.component').then((c) => c.RolesComponent),
