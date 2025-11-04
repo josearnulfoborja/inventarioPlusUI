@@ -18,7 +18,7 @@ export class EvaluacionesComponent implements OnInit {
     mostrarFormulario = false;
     esEdicion = false;
 
-    constructor(private evaluacionService: EvaluacionTecnicaService) {}
+    constructor(private readonly evaluacionService: EvaluacionTecnicaService) {}
 
     ngOnInit(): void {
         this.cargarEvaluaciones();

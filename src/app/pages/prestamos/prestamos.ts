@@ -181,7 +181,7 @@ export class Prestamos implements OnInit {
     };
     editarPrestamoData: Partial<Prestamo> = {};
 
-    constructor(private prestamoService: PrestamoService) {}
+    constructor(private readonly prestamoService: PrestamoService) {}
 
     ngOnInit(): void {
         this.cargarPrestamos();

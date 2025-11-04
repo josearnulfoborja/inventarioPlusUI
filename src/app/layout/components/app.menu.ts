@@ -39,6 +39,31 @@ export class AppMenu {
                     routerLink: ['/equipos']
                 },
                 {
+                    label: 'Estados',
+                    icon: 'pi pi-list',
+                    routerLink: ['/catalogos/estados']
+                },
+                {
+                    label: 'Tipos',
+                    icon: 'pi pi-tags',
+                    routerLink: ['/catalogos/tipos-equipo']
+                },
+                {
+                    label: 'Marcas',
+                    icon: 'pi pi-bookmark',
+                    routerLink: ['/catalogos/marcas']
+                },
+                {
+                    label: 'Modelos',
+                    icon: 'pi pi-folder',
+                    routerLink: ['/catalogos/modelos']
+                },
+                {
+                    label: 'Ubicaciones',
+                    icon: 'pi pi-map',
+                    routerLink: ['/catalogos/ubicaciones']
+                },
+                {
                     label: 'Usuarios',
                     icon: 'pi pi-user',
                     routerLink: ['/usuarios']

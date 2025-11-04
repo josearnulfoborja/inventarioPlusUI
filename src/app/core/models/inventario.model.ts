@@ -192,3 +192,57 @@ export interface EvaluacionFiltro {
     fechaDesde?: Date;
     fechaHasta?: Date;
 }
+
+/**
+ * Catalog/lookup types for Equipos
+ */
+export interface EstadoEquipo {
+    id?: number;
+    codigo: string; // e.g. 'DISPONIBLE'
+    nombre: string; // e.g. 'Disponible'
+    descripcion?: string;
+    activo?: boolean;
+}
+
+export interface TipoEquipo {
+    id?: number;
+    codigo?: string;
+    nombre: string; // e.g. 'Herramienta'
+    descripcion?: string;
+    activo?: boolean;
+}
+
+export interface Modelo {
+    id?: number;
+    codigo?: string;
+    nombre: string; // e.g. 'GBH 2-26'
+    marca?: string;
+    descripcion?: string;
+    activo?: boolean;
+}
+
+/**
+ * Modelo para Marca
+ */
+export interface Marca {
+    id?: number;
+    nombre: string;
+    activo?: boolean;
+    descripcion?: string;
+}
+
+export interface Ubicacion {
+    id?: number;
+    codigo?: string;
+    nombre: string; // e.g. 'Bodega A'
+    tipo?: string; // 'Bodega'|'Oficina'|'Obra' etc.
+    direccion?: string;
+    piso?: string;
+    sector?: string;
+    lat?: number;
+    lng?: number;
+    responsable?: string;
+    telefono?: string;
+    descripcion?: string;
+    activo?: boolean;
+}

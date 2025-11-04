@@ -22,6 +22,31 @@ export const appRoutes: Routes = [
                 data: { breadcrumb: 'Equipos' }
             },
             {
+                path: 'catalogos/estados',
+                loadComponent: () => import('@/pages/catalogs/estados.component').then((c) => c.EstadosComponent),
+                data: { breadcrumb: 'Estados de Equipo' }
+            },
+            {
+                path: 'catalogos/tipos-equipo',
+                loadComponent: () => import('@/pages/catalogs/tipos-equipo.component').then((c) => c.TiposEquipoComponent),
+                data: { breadcrumb: 'Tipos de Equipo' }
+            },
+            {
+                path: 'catalogos/modelos',
+                loadComponent: () => import('@/pages/catalogs/modelos.component').then((c) => c.ModelosComponent),
+                data: { breadcrumb: 'Modelos' }
+            },
+            {
+                path: 'catalogos/marcas',
+                loadComponent: () => import('@/pages/catalogs/marcas.component').then((c) => c.MarcasComponent),
+                data: { breadcrumb: 'Marcas' }
+            },
+            {
+                path: 'catalogos/ubicaciones',
+                loadComponent: () => import('@/pages/catalogs/ubicaciones.component').then((c) => c.UbicacionesComponent),
+                data: { breadcrumb: 'Ubicaciones' }
+            },
+            {
                 path: 'prestamos',
                 loadComponent: () => import('@/pages/prestamos/prestamos').then((c) => c.Prestamos),
                 data: { breadcrumb: 'Préstamos' }
