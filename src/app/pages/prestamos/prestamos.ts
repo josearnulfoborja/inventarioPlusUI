@@ -11,6 +11,10 @@ import { Prestamo } from '@/core/models/inventario.model';
         imports: [CommonModule, FormsModule],
         template: `
             <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Gestión de Préstamos</h2>
+                    <button class="btn btn-primary" (click)="abrirModalNuevo()">+ Nuevo Préstamo</button>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full bg-white border rounded">
                         <thead class="bg-gray-100">
@@ -19,32 +23,26 @@ import { Prestamo } from '@/core/models/inventario.model';
                                 <th class="px-4 py-3 text-left">Cliente</th>
                                 <th class="px-4 py-3 text-left">Equipo</th>
                                 <th class="px-4 py-3 text-left">Especialista</th>
+                                <th class="px-4 py-3 text-left">Fecha Préstamo</th>
                                 <th class="px-4 py-3 text-left">Fecha Entrega</th>
                                 <th class="px-4 py-3 text-left">Fecha Prevista</th>
                                 <th class="px-4 py-3 text-left">Fecha Devolución</th>
                                 <th class="px-4 py-3 text-left">Costo Total</th>
-                                <th class="px-4 py-3 text-left">Estado</th>
+                                <th class="px-4 py-3 text-left">Estado Préstamo</th>
                                 <th class="px-4 py-3 text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr *ngFor="let prestamo of prestamos" class="border-b hover:bg-gray-50">
                                 <td class="px-4 py-3 font-mono text-sm bg-gray-100 rounded">{{ prestamo.idPrestamo }}</td>
-                                <td class="px-4 py-3">{{ prestamo.cliente.nombre }} {{ prestamo.cliente.apellido }}</td>
-                                <td class="px-4 py-3">{{ prestamo.equipo.nombre }}</td>
-                                <td class="px-4 py-3">{{ prestamo.especialista.nombre }}</td>
+                                <td class="px-4 py-3">{{ prestamo.cliente.idCliente }}</td>
+                                <td class="px-4 py-3">{{ prestamo.equipo.idEquipo }}</td>
+                                <td class="px-4 py-3">{{ prestamo.especialista.idEspecialista }}</td>
                                 <td class="px-4 py-3">{{ prestamo.fechaEntrega | date:'shortDate' }}</td>
                                 <td class="px-4 py-3">{{ prestamo.fechaPrevista | date:'shortDate' }}</td>
                                 <td class="px-4 py-3">{{ prestamo.fechaDevolucion | date:'shortDate' }}</td>
                                 <td class="px-4 py-3">{{ prestamo.costoTotal | currency:'USD' }}</td>
-                                <td class="px-4 py-3">
-                                    <span class="badge" [ngClass]="{
-                                        'badge-success': prestamo.estadoPrestamo === 'ACTIVO',
-                                        'badge-warning': prestamo.estadoPrestamo === 'VENCIDO',
-                                        'badge-info': prestamo.estadoPrestamo === 'DEVUELTO',
-                                        'badge-error': prestamo.estadoPrestamo === 'CANCELADO'
-                                    }">{{ prestamo.estadoPrestamo }}</span>
-                                </td>
+                                <td class="px-4 py-3">{{ prestamo.estadoPrestamo }}</td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex gap-2 justify-center">
                                         <button (click)="verDetalle(prestamo)" class="text-blue-500 hover:text-blue-700" title="Ver detalles">
@@ -92,47 +90,43 @@ import { Prestamo } from '@/core/models/inventario.model';
 
             <!-- Modal para nuevo préstamo (funcional) -->
             <div *ngIf="modalNuevo" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-                <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-lg">
+                <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-2xl">
                     <h3 class="text-lg font-bold mb-4">Nuevo Préstamo</h3>
                     <form (ngSubmit)="guardarPrestamo()">
-                        <div class="mb-4">
-                            <label class="block mb-1">Cliente (ID)</label>
-                            <input type="number" class="input input-bordered w-full" placeholder="ID Cliente" [(ngModel)]="nuevoPrestamo.cliente!.idCliente" name="clienteId" required>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block mb-1">Equipo (ID)</label>
-                            <input type="number" class="input input-bordered w-full" placeholder="ID Equipo" [(ngModel)]="nuevoPrestamo.equipo!.idEquipo" name="equipoId" required>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block mb-1">Especialista (ID)</label>
-                            <input type="number" class="input input-bordered w-full" placeholder="ID Especialista" [(ngModel)]="nuevoPrestamo.especialista!.idEspecialista" name="especialistaId" required>
-                        </div>
-                        <div class="mb-4 flex gap-2">
-                            <div class="flex-1">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block mb-1">ID Cliente</label>
+                                <input type="number" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.cliente!.idCliente" name="clienteId" required>
+                            </div>
+                            <div>
+                                <label class="block mb-1">ID Equipo</label>
+                                <input type="number" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.equipo!.idEquipo" name="equipoId" required>
+                            </div>
+                            <div>
+                                <label class="block mb-1">ID Especialista</label>
+                                <input type="number" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.especialista!.idEspecialista" name="especialistaId" required>
+                            </div>
+                            <div>
                                 <label class="block mb-1">Fecha Entrega</label>
-                                <input type="date" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.fechaEntrega" name="fechaEntrega" required>
+                                <input type="datetime-local" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.fechaEntrega" name="fechaEntrega">
                             </div>
-                            <div class="flex-1">
+                            <div>
                                 <label class="block mb-1">Fecha Prevista</label>
-                                <input type="date" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.fechaPrevista" name="fechaPrevista" required>
+                                <input type="datetime-local" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.fechaPrevista" name="fechaPrevista">
                             </div>
-                            <div class="flex-1">
+                            <div>
                                 <label class="block mb-1">Fecha Devolución</label>
-                                <input type="date" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.fechaDevolucion" name="fechaDevolucion">
+                                <input type="datetime-local" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.fechaDevolucion" name="fechaDevolucion">
                             </div>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block mb-1">Costo Total</label>
-                            <input type="number" class="input input-bordered w-full" placeholder="Costo Total" [(ngModel)]="nuevoPrestamo.costoTotal" name="costoTotal" required>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block mb-1">Estado</label>
-                            <select class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.estadoPrestamo" name="estadoPrestamo" required>
-                                <option value="ACTIVO">ACTIVO</option>
-                                <option value="VENCIDO">VENCIDO</option>
-                                <option value="DEVUELTO">DEVUELTO</option>
-                                <option value="CANCELADO">CANCELADO</option>
-                            </select>
+                            <div>
+                                <label class="block mb-1">Costo Total</label>
+                                <input type="number" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.costoTotal" name="costoTotal" required>
+                            </div>
+                            <div>
+                                <label class="block mb-1">Estado Préstamo</label>
+                                <input type="text" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.estadoPrestamo" name="estadoPrestamo" required>
+                            </div>
+                            <!-- Puedes agregar aquí los campos extra si los agregas al modelo -->
                         </div>
                         <div class="flex justify-end gap-2 mt-6">
                             <button type="button" class="btn btn-outline" (click)="cerrarModalNuevo()">Cancelar</button>
@@ -172,7 +166,10 @@ export class Prestamos implements OnInit {
             estado: 'DISPONIBLE',
             activo: true
         },
-    especialista: { idEspecialista: 0, nombre: '' },
+        especialista: {
+            idEspecialista: 0,
+            nombre: ''
+        },
         fechaEntrega: '',
         fechaDevolucion: '',
         fechaPrevista: '',
@@ -222,7 +219,10 @@ export class Prestamos implements OnInit {
                 estado: 'DISPONIBLE',
                 activo: true
             },
-            especialista: { idEspecialista: 0, nombre: '' },
+            especialista: {
+                idEspecialista: 0,
+                nombre: ''
+            },
             fechaEntrega: '',
             fechaDevolucion: '',
             fechaPrevista: '',
