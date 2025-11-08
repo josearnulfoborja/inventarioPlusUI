@@ -10,6 +10,7 @@ import { ContactUs } from './contactus/contactus';
 export default [
     { path: 'documentation', component: Documentation },
     { path: 'crud', component: Crud, data: { breadcrumb: 'Crud' } },
+    // { path: 'especialistas', loadChildren: () => import('./especialistas/especialistas.routes').then(m => m.default), data: { breadcrumb: 'Especialistas' } },
     { path: 'empty', component: Empty },
     { path: 'invoice', component: Invoice, data: { breadcrumb: 'Invoice' } },
     { path: 'aboutus', component: AboutUs },

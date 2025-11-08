@@ -263,8 +263,45 @@ export class Prestamos implements OnInit {
         };
     }
 
+    limpiarPayloadPrestamo(payload: any): any {
+        // Limpia strings vacíos y los convierte a null, recursivo para objetos anidados
+        if (Array.isArray(payload)) {
+            return payload.map((v) => this.limpiarPayloadPrestamo(v));
+        } else if (payload && typeof payload === 'object') {
+            const obj: any = {};
+            for (const key of Object.keys(payload)) {
+                const value = payload[key];
+                if (typeof value === 'string' && value.trim() === '') {
+                    obj[key] = null;
+                } else if (value && typeof value === 'object') {
+                    obj[key] = this.limpiarPayloadPrestamo(value);
+                } else {
+                    obj[key] = value;
+                }
+            }
+            return obj;
+        }
+        return payload;
+    }
+
     guardarPrestamo() {
-        this.prestamoService.crearPrestamo(this.nuevoPrestamo as Prestamo).subscribe({
+        // Validar campos obligatorios
+        if (!this.nuevoPrestamo.cliente?.idCliente || !this.nuevoPrestamo.equipo?.idEquipo || !this.nuevoPrestamo.especialista?.idEspecialista) {
+            alert('Todos los campos de relación son obligatorios');
+            return;
+        }
+        // Convertir fechas a formato ISO si existen
+        const payload: any = {
+            ...this.nuevoPrestamo,
+            fechaEntrega: this.nuevoPrestamo.fechaEntrega ? new Date(this.nuevoPrestamo.fechaEntrega).toISOString().split('T')[0] : null,
+            fechaDevolucion: this.nuevoPrestamo.fechaDevolucion ? new Date(this.nuevoPrestamo.fechaDevolucion).toISOString().split('T')[0] : null,
+            fechaPrevista: this.nuevoPrestamo.fechaPrevista ? new Date(this.nuevoPrestamo.fechaPrevista).toISOString().split('T')[0] : null,
+            cliente: { idCliente: this.nuevoPrestamo.cliente.idCliente },
+            equipo: { idEquipo: this.nuevoPrestamo.equipo.idEquipo },
+            especialista: { idEspecialista: this.nuevoPrestamo.especialista.idEspecialista }
+        };
+        const payloadLimpio = this.limpiarPayloadPrestamo(payload);
+        this.prestamoService.crearPrestamo(payloadLimpio as Prestamo).subscribe({
             next: () => {
                 this.cargarPrestamos();
                 this.cerrarModalNuevo();
@@ -294,7 +331,23 @@ export class Prestamos implements OnInit {
     }
     guardarEdicionPrestamo() {
         if (!this.editarPrestamoData.idPrestamo) return;
-        this.prestamoService.actualizarPrestamo(this.editarPrestamoData.idPrestamo, this.editarPrestamoData as Prestamo).subscribe({
+        // Validar campos obligatorios
+        if (!this.editarPrestamoData.cliente?.idCliente || !this.editarPrestamoData.equipo?.idEquipo || !this.editarPrestamoData.especialista?.idEspecialista) {
+            alert('Todos los campos de relación son obligatorios');
+            return;
+        }
+        // Convertir fechas a formato ISO si existen
+        const payload: any = {
+            ...this.editarPrestamoData,
+            fechaEntrega: this.editarPrestamoData.fechaEntrega ? new Date(this.editarPrestamoData.fechaEntrega).toISOString().split('T')[0] : null,
+            fechaDevolucion: this.editarPrestamoData.fechaDevolucion ? new Date(this.editarPrestamoData.fechaDevolucion).toISOString().split('T')[0] : null,
+            fechaPrevista: this.editarPrestamoData.fechaPrevista ? new Date(this.editarPrestamoData.fechaPrevista).toISOString().split('T')[0] : null,
+            cliente: { idCliente: this.editarPrestamoData.cliente.idCliente },
+            equipo: { idEquipo: this.editarPrestamoData.equipo.idEquipo },
+            especialista: { idEspecialista: this.editarPrestamoData.especialista.idEspecialista }
+        };
+        const payloadLimpio = this.limpiarPayloadPrestamo(payload);
+        this.prestamoService.actualizarPrestamo(this.editarPrestamoData.idPrestamo, payloadLimpio as Prestamo).subscribe({
             next: () => {
                 this.cargarPrestamos();
                 this.cerrarModalEditar();

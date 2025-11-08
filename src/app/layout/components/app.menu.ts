@@ -64,6 +64,11 @@ export class AppMenu {
                     routerLink: ['/catalogos/ubicaciones']
                 },
                 {
+                    label: 'Especialistas',
+                    icon: 'pi pi-id-card',
+                    routerLink: ['/especialistas']
+                },
+                {
                     label: 'Usuarios',
                     icon: 'pi pi-user',
                     routerLink: ['/usuarios']

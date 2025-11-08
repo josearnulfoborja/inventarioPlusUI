@@ -1,0 +1,37 @@
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 2rem;
+  margin: 2rem auto;
+  max-width: 700px;
+}
+
+h2 {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  font-weight: 500;
+}
+
+.table {
+  margin-top: 1.5rem;
+}
+
+.btn {
+  min-width: 90px;
+}
+
+.text-success {
+  color: #28a745;
+}
+
+.text-danger {
+  color: #dc3545;
+}
+
+.alert-info {
+  margin-top: 2rem;
+}

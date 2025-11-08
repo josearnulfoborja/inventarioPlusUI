@@ -1,0 +1,55 @@
+<div class="card">
+  <div class="flex justify-between items-center px-6 pt-6 pb-2">
+    <span class="text-lg font-semibold">Especialistas</span>
+    <button class="text-primary font-medium hover:underline bg-transparent border-0 p-0" (click)="mostrarFormulario = true; editMode = false; especialistaForm.reset({disponibilidad: true})">+ Nuevo Especialista</button>
+  </div>
+  <div class="p-6">
+    <div *ngIf="loading" class="text-center py-6">Cargando...</div>
+
+    <table *ngIf="!loading && especialistas.length" class="min-w-full bg-white border">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 text-left">Nombre</th>
+          <th class="px-4 py-2 text-left">Disponibilidad</th>
+          <th class="px-4 py-2 text-center">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let esp of especialistas" class="border-b hover:bg-gray-50">
+          <td class="px-4 py-2">{{ esp.nombre }}</td>
+          <td class="px-4 py-2">
+            <span [class]="esp.disponibilidad ? 'text-green-600' : 'text-gray-500'">
+              {{ esp.disponibilidad ? 'Disponible' : 'No disponible' }}
+            </span>
+          </td>
+          <td class="px-4 py-2 text-center">
+            <button class="mr-2 text-yellow-600 bg-transparent border-0 p-0" (click)="editarEspecialista(esp); mostrarFormulario = true">Editar</button>
+            <button class="text-red-600 bg-transparent border-0 p-0" (click)="eliminarEspecialista(esp.idEspecialista!)">Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="!loading && !especialistas.length" class="text-center text-gray-500 py-8">No hay especialistas registrados.</div>
+
+    <div *ngIf="mostrarFormulario" class="mt-4">
+      <form [formGroup]="especialistaForm" (ngSubmit)="guardarEspecialista()" class="mb-4">
+        <div class="form-group mb-2">
+          <label>Nombre</label>
+          <input formControlName="nombre" class="form-control" [class.is-invalid]="especialistaForm.get('nombre')?.invalid && especialistaForm.get('nombre')?.touched">
+        </div>
+        <div class="form-group mb-2">
+          <label>Disponibilidad</label>
+          <select formControlName="disponibilidad" class="form-control">
+            <option [value]="true">Disponible</option>
+            <option [value]="false">No disponible</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary me-2" [disabled]="especialistaForm.invalid">
+          {{ editMode ? 'Actualizar' : 'Agregar' }} Especialista
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancelarEdicion(); mostrarFormulario = false">Cancelar</button>
+      </form>
+    </div>
+  </div>
+</div>

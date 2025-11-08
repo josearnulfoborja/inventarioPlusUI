@@ -60,6 +60,11 @@ export const appRoutes: Routes = [
                     path: 'usuarios',
                     loadComponent: () => import('src/app/pages/usuarios/usuarios.component').then(m => m.UsuariosComponent)
                 },
+                {
+                    path: 'especialistas',
+                    loadComponent: () => import('@/pages/especialistas/especialistas.component').then(m => m.EspecialistasComponent),
+                    data: { breadcrumb: 'Especialistas' }
+                },
             {
                 path: 'roles',
                 loadComponent: () => import('@/pages/usuarios/roles.component').then((c) => c.RolesComponent),
