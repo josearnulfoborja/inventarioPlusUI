@@ -76,11 +76,28 @@ export class Clientes implements OnInit {
         this.clienteService.getClientes(1, 100).subscribe({
             next: (resp: any) => {
                 // ClienteService returns PaginatedResponse by default
+                let list: any[] = [];
                 if (resp?.data) {
-                    this.clientes = resp.data;
+                    list = resp.data;
                 } else {
-                    this.clientes = resp as Cliente[];
+                    list = Array.isArray(resp) ? resp : (resp?.items ?? resp?.content ?? []);
                 }
+
+                // normalize common backend field variants to the frontend model
+                this.clientes = (list || []).map((c: any) => {
+                    const copy: any = { ...c };
+                    // id variants
+                    if (copy.id == null && copy.id_cliente != null) copy.id = copy.id_cliente;
+                    if (copy.id == null && copy.idCliente != null) copy.id = copy.idCliente;
+                    // documento / numeroDocumento
+                    if ((copy.numeroDocumento == null || copy.numeroDocumento === '') && copy.documento) copy.numeroDocumento = copy.documento;
+                    if ((copy.numeroDocumento == null || copy.numeroDocumento === '') && copy.numero_documento) copy.numeroDocumento = copy.numero_documento;
+                    // email / correo
+                    if ((copy.email == null || copy.email === '') && copy.correo) copy.email = copy.correo;
+                    if ((copy.email == null || copy.email === '') && copy.mail) copy.email = copy.mail;
+
+                    return copy as Cliente;
+                });
                 this.cargando = false;
             },
             error: (err: any) => {

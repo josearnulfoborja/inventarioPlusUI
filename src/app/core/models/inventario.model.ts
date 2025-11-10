@@ -43,6 +43,7 @@ export interface Equipo {
  */
 export interface Prestamo {
     idPrestamo: number;
+    fechaPrestamo?: string;
     fechaEntrega: string;
     fechaDevolucion: string;
     fechaPrevista: string;
@@ -115,6 +116,9 @@ export interface Usuario {
 export interface Rol {
     id?: number;
     nombreRol: string;
+    /** posibles nombres alternativos que algunos backends devuelven */
+    nombre?: string;
+    name?: string;
     descripcion?: string;
 }
 
@@ -229,6 +233,20 @@ export interface Marca {
     nombre: string;
     activo?: boolean;
     descripcion?: string;
+}
+
+/**
+ * Modelo genérico para códigos maestros (mcodigos)
+ * Se usa como tabla unificada para estados, marcas simples, tipos, etc.
+ */
+export interface Mcodigo {
+    id?: number;
+    grupo: string;    // e.g. 'EQUIPO' | 'PRESTAMO' | 'MARCA' | 'TIPO_EQUIPO'
+    codigo: string;   // e.g. 'DISPONIBLE', 'ACTIVO', 'BOSCH'
+    nombre: string;   // e.g. 'Disponible', 'Activo', 'Bosch'
+    descripcion?: string;
+    orden?: number;
+    activo?: boolean;
 }
 
 export interface Ubicacion {

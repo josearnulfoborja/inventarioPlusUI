@@ -47,6 +47,11 @@ export const appRoutes: Routes = [
                 data: { breadcrumb: 'Ubicaciones' }
             },
             {
+                path: 'catalogos/mcodigos',
+                loadComponent: () => import('@/pages/mcodigos/mcodigos.component').then((c) => c.McodigosComponent),
+                data: { breadcrumb: 'Maestro Códigos' }
+            },
+            {
                 path: 'prestamos',
                 loadComponent: () => import('@/pages/prestamos/prestamos').then((c) => c.Prestamos),
                 data: { breadcrumb: 'Préstamos' }

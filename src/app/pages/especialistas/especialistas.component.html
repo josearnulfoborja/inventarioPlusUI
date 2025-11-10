@@ -41,8 +41,8 @@
         <div class="form-group mb-2">
           <label>Disponibilidad</label>
           <select formControlName="disponibilidad" class="form-control">
-            <option [value]="true">Disponible</option>
-            <option [value]="false">No disponible</option>
+            <option [ngValue]="true">Disponible</option>
+            <option [ngValue]="false">No disponible</option>
           </select>
         </div>
         <button type="submit" class="btn btn-primary me-2" [disabled]="especialistaForm.invalid">

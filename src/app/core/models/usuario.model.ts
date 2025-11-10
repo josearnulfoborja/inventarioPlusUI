@@ -11,4 +11,8 @@ export interface Usuario {
   fechaCreacion?: string;
   fechaActualizacion?: string;
   dui?: string;
+  // Optional nested role object (some backends return this)
+  rol?: any;
+  // Derived display name for templates
+  rolNombre?: string;
 }

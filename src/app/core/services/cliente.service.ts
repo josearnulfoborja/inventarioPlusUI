@@ -72,7 +72,14 @@ export class ClienteService {
      * @param cliente Datos del cliente
      */
     crearCliente(cliente: Cliente): Observable<ApiResponse<Cliente>> {
-        return this.apiService.post<Cliente>(this.endpoint, cliente);
+        // Normalize payload: backend may expect `documento` and `correo` field names
+        const clienteAny: any = cliente as any;
+        const payload: any = {
+            ...clienteAny,
+            documento: clienteAny.numeroDocumento ?? clienteAny.documento,
+            correo: clienteAny.email ?? clienteAny.correo
+        };
+        return this.apiService.post<Cliente>(this.endpoint, payload);
     }
 
     /**
@@ -81,7 +88,13 @@ export class ClienteService {
      * @param cliente Datos actualizados del cliente
      */
     actualizarCliente(id: number, cliente: Cliente): Observable<ApiResponse<Cliente>> {
-        return this.apiService.put<Cliente>(`${this.endpoint}/${id}`, cliente);
+        const clienteAny2: any = cliente as any;
+        const payload2: any = {
+            ...clienteAny2,
+            documento: clienteAny2.numeroDocumento ?? clienteAny2.documento,
+            correo: clienteAny2.email ?? clienteAny2.correo
+        };
+        return this.apiService.put<Cliente>(`${this.endpoint}/${id}`, payload2);
     }
 
     /**

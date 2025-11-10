@@ -10,28 +10,28 @@
         <th>Correo</th>
         <th>Teléfono</th>
         <th>Username</th>
-        <th>Rol</th>
+  <th>Rol</th>
         <th>Activo</th>
         <th>DUI</th>
         <th>Acciones</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let usuario of usuarios">
-        <td>{{ usuario.idUsuario }}</td>
-        <td>{{ usuario.nombre }}</td>
-        <td>{{ usuario.apellido }}</td>
-        <td>{{ usuario.correoElectronico }}</td>
-        <td>{{ usuario.telefono }}</td>
-        <td>{{ usuario.username }}</td>
-        <td>{{ usuario.rolId }}</td>
-        <td>{{ usuario.activo ? 'Sí' : 'No' }}</td>
-        <td>{{ usuario.dui }}</td>
-        <td>
-          <button (click)="editarUsuario(usuario)" class="btn btn-warning btn-sm">Editar</button>
-          <button (click)="eliminarUsuario(usuario.idUsuario!)" class="btn btn-danger btn-sm">Eliminar</button>
-        </td>
-      </tr>
+        <tr *ngFor="let usuario of usuarios">
+          <td>{{ usuario.idUsuario }}</td>
+          <td>{{ usuario.nombre }}</td>
+          <td>{{ usuario.apellido }}</td>
+          <td>{{ usuario.correoElectronico }}</td>
+          <td>{{ usuario.telefono }}</td>
+          <td>{{ usuario.username }}</td>
+          <td>{{ usuario.rolNombre }}</td>
+          <td>{{ usuario.activo ? 'Sí' : 'No' }}</td>
+          <td>{{ usuario.dui }}</td>
+          <td>
+            <button (click)="editarUsuario(usuario)" class="btn btn-warning btn-sm">Editar</button>
+            <button (click)="eliminarUsuario(usuario.idUsuario!)" class="btn btn-danger btn-sm">Eliminar</button>
+          </td>
+        </tr>
       <tr *ngIf="usuarios.length === 0">
         <td colspan="10" class="text-center">No se encontraron usuarios</td>
       </tr>
@@ -45,7 +45,9 @@
       <input [(ngModel)]="usuarioSeleccionado!.telefono" name="telefono" placeholder="Teléfono">
       <input [(ngModel)]="usuarioSeleccionado!.username" name="username" placeholder="Username" required>
       <input [(ngModel)]="usuarioSeleccionado!.password" name="password" placeholder="Password" required type="password">
-      <input [(ngModel)]="usuarioSeleccionado!.rolId" name="rolId" placeholder="Rol" type="number" required>
+      <select [(ngModel)]="usuarioSeleccionado!.rolId" name="rolId" required>
+  <option *ngFor="let r of roles" [value]="r.id">{{ getRoleLabel(r) }}</option>
+      </select>
       <input [(ngModel)]="usuarioSeleccionado!.dui" name="dui" placeholder="DUI">
       <label>
         <input type="checkbox" [(ngModel)]="usuarioSeleccionado!.activo" name="activo"> Activo
