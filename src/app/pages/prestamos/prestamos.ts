@@ -7,6 +7,8 @@ import { ClienteService } from '@/core/services/cliente.service';
 import { EquipoService } from '@/core/services/equipo.service';
 import { EspecialistasService } from '@/pages/especialistas/especialistas.service';
 import { Prestamo } from '@/core/models/inventario.model';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 @Component({
     selector: 'app-prestamos',
@@ -106,17 +108,36 @@ import { Prestamo } from '@/core/models/inventario.model';
                     <h3 class="text-lg font-bold mb-4">Nuevo Préstamo</h3>
                     <form (ngSubmit)="guardarPrestamo()">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block mb-1">ID Cliente</label>
-                                <input type="number" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.cliente!.idCliente" name="clienteId" required>
+                            <div class="md:col-span-2">
+                                <label class="block mb-1">Fecha Préstamo</label>
+                                <input type="datetime-local" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.fechaPrestamo" name="fechaPrestamo" required>
                             </div>
                             <div>
-                                <label class="block mb-1">ID Equipo</label>
-                                <input type="number" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.equipo!.idEquipo" name="equipoId" required>
+                                <label class="block mb-1">Cliente</label>
+                                <select class="select select-bordered w-full" [(ngModel)]="nuevoPrestamo.cliente!.idCliente" name="clienteId" required>
+                                    <option [ngValue]="0" disabled>Seleccione cliente</option>
+                                    <option *ngFor="let c of clientesLista" [ngValue]="c.idCliente ?? c.id ?? c.id_client">
+                                        {{ (c.nombre ?? c.name ?? '') + (c.apellido ? ' ' + c.apellido : '') }}
+                                    </option>
+                                </select>
                             </div>
                             <div>
-                                <label class="block mb-1">ID Especialista</label>
-                                <input type="number" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.especialista!.idEspecialista" name="especialistaId" required>
+                                <label class="block mb-1">Equipo</label>
+                                <select class="select select-bordered w-full" [(ngModel)]="nuevoPrestamo.equipo!.idEquipo" name="equipoId" required>
+                                    <option [ngValue]="0" disabled>Seleccione equipo</option>
+                                    <option *ngFor="let e of equiposLista" [ngValue]="e.idEquipo ?? e.id ?? e.id_equipo">
+                                        {{ e.nombre ?? e.name ?? e.codigo ?? ('#' + (e.idEquipo ?? e.id ?? e.id_equipo)) }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-1">Especialista</label>
+                                <select class="select select-bordered w-full" [(ngModel)]="nuevoPrestamo.especialista!.idEspecialista" name="especialistaId" required>
+                                    <option [ngValue]="0" disabled>Seleccione especialista</option>
+                                    <option *ngFor="let s of especialistasLista" [ngValue]="s.idEspecialista ?? s.id ?? s.id_especialista">
+                                        {{ s.nombre ?? s.name ?? ('#' + (s.idEspecialista ?? s.id ?? s.id_especialista)) }}
+                                    </option>
+                                </select>
                             </div>
                             <div>
                                 <label class="block mb-1">Fecha Entrega</label>
@@ -147,6 +168,72 @@ import { Prestamo } from '@/core/models/inventario.model';
                     </form>
                 </div>
             </div>
+
+            <!-- Modal para editar préstamo -->
+            <div *ngIf="modalEditar" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-2xl">
+                    <h3 class="text-lg font-bold mb-4">Editar Préstamo</h3>
+                    <form (ngSubmit)="guardarEdicionPrestamo()">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label class="block mb-1">Fecha Préstamo</label>
+                                <input type="datetime-local" class="input input-bordered w-full" [(ngModel)]="editarPrestamoData.fechaPrestamo" name="editFechaPrestamo" required>
+                            </div>
+                            <div>
+                                <label class="block mb-1">Cliente</label>
+                                <select class="select select-bordered w-full" [(ngModel)]="editarPrestamoData.cliente!.idCliente" name="editClienteId" required>
+                                    <option [ngValue]="0" disabled>Seleccione cliente</option>
+                                    <option *ngFor="let c of clientesLista" [ngValue]="c.idCliente ?? c.id ?? c.id_client">
+                                        {{ (c.nombre ?? c.name ?? '') + (c.apellido ? ' ' + c.apellido : '') }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-1">Equipo</label>
+                                <select class="select select-bordered w-full" [(ngModel)]="editarPrestamoData.equipo!.idEquipo" name="editEquipoId" required>
+                                    <option [ngValue]="0" disabled>Seleccione equipo</option>
+                                    <option *ngFor="let e of equiposLista" [ngValue]="e.idEquipo ?? e.id ?? e.id_equipo">
+                                        {{ e.nombre ?? e.name ?? e.codigo ?? ('#' + (e.idEquipo ?? e.id ?? e.id_equipo)) }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-1">Especialista</label>
+                                <select class="select select-bordered w-full" [(ngModel)]="editarPrestamoData.especialista!.idEspecialista" name="editEspecialistaId" required>
+                                    <option [ngValue]="0" disabled>Seleccione especialista</option>
+                                    <option *ngFor="let s of especialistasLista" [ngValue]="s.idEspecialista ?? s.id ?? s.id_especialista">
+                                        {{ s.nombre ?? s.name ?? ('#' + (s.idEspecialista ?? s.id ?? s.id_especialista)) }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-1">Fecha Entrega</label>
+                                <input type="datetime-local" class="input input-bordered w-full" [(ngModel)]="editarPrestamoData.fechaEntrega" name="editFechaEntrega">
+                            </div>
+                            <div>
+                                <label class="block mb-1">Fecha Prevista</label>
+                                <input type="datetime-local" class="input input-bordered w-full" [(ngModel)]="editarPrestamoData.fechaPrevista" name="editFechaPrevista">
+                            </div>
+                            <div>
+                                <label class="block mb-1">Fecha Devolución</label>
+                                <input type="datetime-local" class="input input-bordered w-full" [(ngModel)]="editarPrestamoData.fechaDevolucion" name="editFechaDevolucion">
+                            </div>
+                            <div>
+                                <label class="block mb-1">Costo Total</label>
+                                <input type="number" class="input input-bordered w-full" [(ngModel)]="editarPrestamoData.costoTotal" name="editCostoTotal" required>
+                            </div>
+                            <div>
+                                <label class="block mb-1">Estado Préstamo</label>
+                                <input type="text" class="input input-bordered w-full" [(ngModel)]="editarPrestamoData.estadoPrestamo" name="editEstadoPrestamo" required>
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-2 mt-6">
+                            <button type="button" class="btn btn-outline" (click)="cerrarModalEditar()">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         `,
     styleUrls: []
 })
@@ -155,6 +242,10 @@ export class Prestamos implements OnInit {
     clienteMap: Record<number, string> = {};
     equipoMap: Record<number, string> = {};
     especialistaMap: Record<number, string> = {};
+    // Listas para selects en formularios
+    clientesLista: any[] = [];
+    equiposLista: any[] = [];
+    especialistasLista: any[] = [];
     // Evita solicitudes duplicadas para especialistas
     private inFlightEspecialistas: Set<number> = new Set();
     modalNuevo: boolean = false;
@@ -224,6 +315,7 @@ export class Prestamos implements OnInit {
                 const list = this.extractArray(resp);
                 // eslint-disable-next-line no-console
                 console.debug('[DEBUG] clientes lookup length:', list.length, list[0]);
+                this.clientesLista = list;
                 list.forEach((c: any) => {
                     const id = c?.idCliente ?? c?.id ?? c?.id_client ?? c?.idCliente ?? null;
                     const name = ((c?.nombre ?? c?.name ?? c?.firstName ?? '') + (c?.apellido ? ' ' + c.apellido : '')).trim();
@@ -240,6 +332,7 @@ export class Prestamos implements OnInit {
                 const list = this.extractArray(resp);
                 // eslint-disable-next-line no-console
                 console.debug('[DEBUG] equipos lookup length:', list.length, list[0]);
+                this.equiposLista = list;
                 list.forEach((e: any) => {
                     const id = e?.idEquipo ?? e?.id ?? e?.id_equipo ?? null;
                     const name = e?.nombre ?? e?.name ?? e?.codigo ?? '';
@@ -251,6 +344,7 @@ export class Prestamos implements OnInit {
 
         this.especialistasService.getEspecialistas().subscribe({
             next: (list: any[]) => {
+                this.especialistasLista = list || [];
                 (list || []).forEach((s: any) => {
                     const id = s.idEspecialista ?? s.id ?? s.id_especialista ?? 0;
                     const name = s.nombre ?? s.name ?? '';
@@ -612,6 +706,8 @@ export class Prestamos implements OnInit {
     abrirModalNuevo() {
         this.modalNuevo = true;
         this.nuevoPrestamo = {
+            // Por defecto la fecha de préstamo es ahora, en formato compatible con input datetime-local (YYYY-MM-DDTHH:mm)
+            fechaPrestamo: this.nowForDatetimeLocal(),
             cliente: {
                 idCliente: 0,
                 nombre: '',
@@ -637,7 +733,6 @@ export class Prestamos implements OnInit {
                 idEspecialista: 0,
                 nombre: ''
             },
-            fechaPrestamo: '',
             fechaEntrega: '',
             fechaDevolucion: '',
             fechaPrevista: '',
@@ -670,7 +765,6 @@ export class Prestamos implements OnInit {
                 activo: true
             },
             especialista: { idEspecialista: 0, nombre: '' },
-            fechaPrestamo: '',
             fechaEntrega: '',
             fechaDevolucion: '',
             fechaPrevista: '',
@@ -706,9 +800,36 @@ export class Prestamos implements OnInit {
             alert('Todos los campos de relación son obligatorios');
             return;
         }
+        // Validar existencia previa de las relaciones para evitar errores de FK
+        const cId = Number(this.nuevoPrestamo.cliente!.idCliente);
+        const eId = Number(this.nuevoPrestamo.equipo!.idEquipo);
+        const sId = Number(this.nuevoPrestamo.especialista!.idEspecialista);
+        forkJoin({
+            cliente: this.clienteService.getClienteById(cId).pipe(
+                catchError(() => of(null)),
+                map((resp: any) => !!(resp?.data ?? resp))
+            ),
+            equipo: this.equipoService.getEquipoById(eId).pipe(
+                catchError(() => of(null)),
+                map((resp: any) => !!(resp?.data ?? resp))
+            ),
+            especialista: this.especialistasService.getEspecialista(sId).pipe(
+                catchError(() => of(null)),
+                map((resp: any) => !!resp)
+            )
+        }).subscribe(({ cliente, equipo, especialista }) => {
+            const missing: string[] = [];
+            if (!cliente) missing.push(`cliente #${cId}`);
+            if (!equipo) missing.push(`equipo #${eId}`);
+            if (!especialista) missing.push(`especialista #${sId}`);
+            if (missing.length) {
+                alert(`No existe(n): ${missing.join(', ')}. Verifique los IDs antes de guardar.`);
+                return;
+            }
         // Construir un payload estricto y convertir tipos (evita enviar labels como "Disponible")
         const payload: any = {
-            fechaPrestamo: this.nuevoPrestamo.fechaPrestamo ? new Date(this.nuevoPrestamo.fechaPrestamo).toISOString().split('T')[0] : null,
+            // Si no se especifica, usar hoy como fecha de préstamo
+            fechaPrestamo: this.nuevoPrestamo.fechaPrestamo ? new Date(this.nuevoPrestamo.fechaPrestamo).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             fechaEntrega: this.nuevoPrestamo.fechaEntrega ? new Date(this.nuevoPrestamo.fechaEntrega).toISOString().split('T')[0] : null,
             fechaDevolucion: this.nuevoPrestamo.fechaDevolucion ? new Date(this.nuevoPrestamo.fechaDevolucion).toISOString().split('T')[0] : null,
             fechaPrevista: this.nuevoPrestamo.fechaPrevista ? new Date(this.nuevoPrestamo.fechaPrevista).toISOString().split('T')[0] : null,
@@ -717,7 +838,16 @@ export class Prestamos implements OnInit {
             estadoPrestamo: this.normalizeToCodigo(this.nuevoPrestamo.estadoPrestamo as any),
             cliente: { idCliente: Number(this.nuevoPrestamo.cliente!.idCliente) },
             equipo: { idEquipo: Number(this.nuevoPrestamo.equipo!.idEquipo) },
-            especialista: { idEspecialista: Number(this.nuevoPrestamo.especialista!.idEspecialista) }
+            especialista: { idEspecialista: Number(this.nuevoPrestamo.especialista!.idEspecialista) },
+            // Campos alternativos por si el backend espera ids planos
+            clienteId: Number(this.nuevoPrestamo.cliente!.idCliente),
+            equipoId: Number(this.nuevoPrestamo.equipo!.idEquipo),
+            especialistaId: Number(this.nuevoPrestamo.especialista!.idEspecialista),
+            // Variantes camelCase comunes en entidades JPA/DTO
+            idCliente: Number(this.nuevoPrestamo.cliente!.idCliente),
+            idEquipo: Number(this.nuevoPrestamo.equipo!.idEquipo),
+            idEspecialista: Number(this.nuevoPrestamo.especialista!.idEspecialista),
+            estado: this.normalizeToCodigo(this.nuevoPrestamo.estadoPrestamo as any)
         };
     const payloadLimpio = this.limpiarPayloadPrestamo(payload);
     // DEBUG: mostrar payload enviado para diagnóstico (remover después de verificar)
@@ -728,9 +858,13 @@ export class Prestamos implements OnInit {
                 this.cargarPrestamos();
                 this.cerrarModalNuevo();
             },
-            error: () => {
-                alert('Error al crear el préstamo');
+            error: (err: any) => {
+                // Mostrar el mensaje real del ApiService para facilitar el diagnóstico
+                console.error('[ERROR crearPrestamo]', err);
+                const backendMsg = err?.message || err?.original?.message || err?.original?.error;
+                alert(backendMsg || 'Error al crear el préstamo');
             }
+        });
         });
     }
 
@@ -744,7 +878,14 @@ export class Prestamos implements OnInit {
     }
 
     editarPrestamo(prestamo: Prestamo) {
-        this.editarPrestamoData = { ...prestamo };
+        // Preformatear fechas para inputs datetime-local
+        this.editarPrestamoData = {
+            ...prestamo,
+            fechaPrestamo: this.toDatetimeLocal(prestamo.fechaPrestamo),
+            fechaEntrega: this.toDatetimeLocal(prestamo.fechaEntrega),
+            fechaDevolucion: this.toDatetimeLocal(prestamo.fechaDevolucion),
+            fechaPrevista: this.toDatetimeLocal(prestamo.fechaPrevista)
+        } as any;
         this.modalEditar = true;
     }
     cerrarModalEditar() {
@@ -758,6 +899,9 @@ export class Prestamos implements OnInit {
             alert('Todos los campos de relación son obligatorios');
             return;
         }
+        const cId = Number(this.editarPrestamoData.cliente!.idCliente);
+        const eId = Number(this.editarPrestamoData.equipo!.idEquipo);
+        const sId = Number(this.editarPrestamoData.especialista!.idEspecialista);
         const payload: any = {
             fechaPrestamo: this.editarPrestamoData.fechaPrestamo ? new Date(this.editarPrestamoData.fechaPrestamo).toISOString().split('T')[0] : null,
             fechaEntrega: this.editarPrestamoData.fechaEntrega ? new Date(this.editarPrestamoData.fechaEntrega).toISOString().split('T')[0] : null,
@@ -767,21 +911,86 @@ export class Prestamos implements OnInit {
             estadoPrestamo: this.normalizeToCodigo(this.editarPrestamoData.estadoPrestamo as any),
             cliente: { idCliente: Number(this.editarPrestamoData.cliente?.idCliente ?? 0) },
             equipo: { idEquipo: Number(this.editarPrestamoData.equipo?.idEquipo ?? 0) },
-            especialista: { idEspecialista: Number(this.editarPrestamoData.especialista?.idEspecialista ?? 0) }
+            especialista: { idEspecialista: Number(this.editarPrestamoData.especialista?.idEspecialista ?? 0) },
+            // Alternativos
+            clienteId: Number(this.editarPrestamoData.cliente?.idCliente ?? 0),
+            equipoId: Number(this.editarPrestamoData.equipo?.idEquipo ?? 0),
+            especialistaId: Number(this.editarPrestamoData.especialista?.idEspecialista ?? 0),
+            idCliente: Number(this.editarPrestamoData.cliente?.idCliente ?? 0),
+            idEquipo: Number(this.editarPrestamoData.equipo?.idEquipo ?? 0),
+            idEspecialista: Number(this.editarPrestamoData.especialista?.idEspecialista ?? 0),
+            estado: this.normalizeToCodigo(this.editarPrestamoData.estadoPrestamo as any)
         };
     const payloadLimpio = this.limpiarPayloadPrestamo(payload);
     // DEBUG: mostrar payload de edición para diagnóstico (remover después de verificar)
     // eslint-disable-next-line no-console
     console.debug('[DEBUG] Payload actualizarPrestamo:', JSON.stringify(payloadLimpio, null, 2));
-    this.prestamoService.actualizarPrestamo(this.editarPrestamoData.idPrestamo, payloadLimpio as Prestamo).subscribe({
+    // Validar existencia previa antes de enviar PUT
+    forkJoin({
+        cliente: this.clienteService.getClienteById(cId).pipe(catchError(() => of(null)), map((resp: any) => !!(resp?.data ?? resp))),
+        equipo: this.equipoService.getEquipoById(eId).pipe(catchError(() => of(null)), map((resp: any) => !!(resp?.data ?? resp))),
+        especialista: this.especialistasService.getEspecialista(sId).pipe(catchError(() => of(null)), map((resp: any) => !!resp))
+    }).subscribe(({ cliente, equipo, especialista }) => {
+        const missing: string[] = [];
+        if (!cliente) missing.push(`cliente #${cId}`);
+        if (!equipo) missing.push(`equipo #${eId}`);
+        if (!especialista) missing.push(`especialista #${sId}`);
+        if (missing.length) {
+            alert(`No existe(n): ${missing.join(', ')}. Verifique los IDs antes de guardar.`);
+            return;
+        }
+        this.prestamoService.actualizarPrestamo(this.editarPrestamoData.idPrestamo!, payloadLimpio as Prestamo).subscribe({
             next: () => {
                 this.cargarPrestamos();
                 this.cerrarModalEditar();
             },
-            error: () => {
-                alert('Error al editar el préstamo');
+            error: (err: any) => {
+                console.error('[ERROR actualizarPrestamo]', err);
+                const backendMsg = err?.message || err?.original?.message || err?.original?.error;
+                alert(backendMsg || 'Error al editar el préstamo');
             }
         });
+    });
+    }
+
+    /** Devuelve la fecha/hora actual en formato válido para input type="datetime-local" (YYYY-MM-DDTHH:mm) */
+    private nowForDatetimeLocal(): string {
+        const d = new Date();
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const yyyy = d.getFullYear();
+        const mm = pad(d.getMonth() + 1);
+        const dd = pad(d.getDate());
+        const hh = pad(d.getHours());
+        const mi = pad(d.getMinutes());
+        return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+    }
+
+    /**
+     * Convierte una fecha (Date o string) a formato 'YYYY-MM-DDTHH:mm' para inputs datetime-local.
+     * Si el valor es 'YYYY-MM-DD', agrega 'T00:00'. Si es null/undefined, devuelve ''.
+     */
+    private toDatetimeLocal(value?: string | Date | null): string {
+        if (!value) return '';
+        let d: Date;
+        if (typeof value === 'string') {
+            // Si ya viene con 'T', úsala directamente
+            if (/T\d{2}:\d{2}/.test(value)) {
+                const v = value.slice(0,16);
+                return v;
+            }
+            // Si viene 'YYYY-MM-DD', crear Date a medianoche local
+            d = new Date(value);
+        } else {
+            d = value;
+        }
+        if (Number.isNaN(d.getTime())) return '';
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const yyyy = d.getFullYear();
+        const mm = pad(d.getMonth() + 1);
+        const dd = pad(d.getDate());
+        const hh = pad(d.getHours());
+        const mi = pad(d.getMinutes());
+        return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
     }
 
     /**
