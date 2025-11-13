@@ -6,6 +6,7 @@ import { PrestamoService } from '@/core/services/prestamo.service';
 import { ClienteService } from '@/core/services/cliente.service';
 import { EquipoService } from '@/core/services/equipo.service';
 import { EspecialistasService } from '@/pages/especialistas/especialistas.service';
+import { ApiService } from '@/core/services/api.service';
 import { Prestamo } from '@/core/models/inventario.model';
 
 @Component({
@@ -19,6 +20,8 @@ import { Prestamo } from '@/core/models/inventario.model';
                     <div class="flex items-center gap-2">
                         <button class="btn btn-primary" (click)="abrirModalNuevo()">+ Nuevo Préstamo</button>
                         <button class="btn btn-outline" (click)="forceReloadNames()">Forzar cargar nombres</button>
+                        <button class="btn btn-secondary" (click)="generateReport('pdf')">Exportar PDF</button>
+                        <button class="btn btn-secondary" (click)="generateReport('excel')">Exportar Excel</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -200,7 +203,8 @@ export class Prestamos implements OnInit {
         private readonly prestamoService: PrestamoService,
         private readonly clienteService: ClienteService,
         private readonly equipoService: EquipoService,
-        private readonly especialistasService: EspecialistasService
+        private readonly especialistasService: EspecialistasService,
+        private readonly apiService: ApiService
     ) {}
 
     ngOnInit(): void {
@@ -214,6 +218,28 @@ export class Prestamos implements OnInit {
         // eslint-disable-next-line no-console
         console.debug('[DEBUG] forceReloadNames invoked');
         this.fillMissingLookupIds(this.prestamos);
+    }
+
+    /**
+     * Genera y descarga el reporte de préstamos (formato pdf o excel).
+     * Asume que el backend expone un endpoint que devuelve el archivo directamente.
+     * Endpoint usado: /reports/prestamos-activos?format=pdf|excel
+     */
+    generateReport(format: 'pdf' | 'excel') {
+        const fmt = format === 'pdf' ? 'pdf' : 'xlsx';
+        const endpoint = `/reports/prestamos-activos?format=${format}`;
+        const filename = `prestamos_activos.${fmt}`;
+        // Usamos ApiService.downloadFile que ya gestiona la descarga del blob
+        this.apiService.downloadFile(endpoint, filename).subscribe({
+            next: () => {
+                // eslint-disable-next-line no-console
+                console.debug('[DEBUG] report download started', endpoint);
+            },
+            error: (err) => {
+                console.error('Error descargando el reporte:', err);
+                alert('Error al generar/descargar el reporte. Revisa la consola para más detalles.');
+            }
+        });
     }
 
     private loadLookupsAndData(): void {
@@ -399,10 +425,13 @@ export class Prestamos implements OnInit {
         this.inFlightEspecialistas.add(id);
         this.especialistasService.getEspecialista(id).subscribe({
             next: (data: any) => {
-                const name = data?.nombre ?? data?.name ?? `#${id}`;
+                // Defensive unwrap: algunos endpoints devuelven { data: { ... } } o { data: { especialista: { ... } } }
+                const payload = data?.data ?? data;
+                const maybeEspecialista = payload?.especialista ?? payload;
+                const name = maybeEspecialista?.nombre ?? maybeEspecialista?.name ?? maybeEspecialista?.fullName ?? `#${id}`;
                 this.especialistaMap[Number(id)] = name;
                 // eslint-disable-next-line no-console
-                console.debug('[DEBUG] especialista fetched:', id, name);
+                console.debug('[DEBUG] especialista fetched:', id, name, payload);
                 this.inFlightEspecialistas.delete(id);
             },
             error: () => {
@@ -596,10 +625,12 @@ export class Prestamos implements OnInit {
         });
 
         missingEspecialistas.forEach((id) => {
-            // EspecialistasService already unwraps resp.data in getEspecialista
+            // EspecialistasService may or may not unwrap resp.data; manejamos wrappers comunes defensivamente
             this.especialistasService.getEspecialista(id).subscribe({
                 next: (data: any) => {
-                    const name = data?.nombre ?? data?.name ?? `#${id}`;
+                    const payload = data?.data ?? data;
+                    const maybeEspecialista = payload?.especialista ?? payload;
+                    const name = maybeEspecialista?.nombre ?? maybeEspecialista?.name ?? maybeEspecialista?.fullName ?? `#${id}`;
                     this.especialistaMap[Number(id)] = name;
                 },
                 error: () => {

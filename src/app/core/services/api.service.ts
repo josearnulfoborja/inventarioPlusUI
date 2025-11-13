@@ -131,8 +131,9 @@ export class ApiService {
      * @param filename Nombre del archivo a descargar
      */
     downloadFile(endpoint: string, filename: string): Observable<Blob> {
-        const url = this.buildUrl(endpoint);
-        
+        // Allow passing an absolute URL (http://...) or a relative endpoint
+        const url = endpoint.startsWith('http') ? endpoint : this.buildUrl(endpoint);
+
         return this.http.get(url, {
             responseType: 'blob'
         }).pipe(
