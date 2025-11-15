@@ -15,9 +15,10 @@ import { PdfViewerModule } from 'ng2-pdf-viewer';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 // pdfmake y fuentes
-import * as pdfMake from 'pdfmake/build/pdfmake';
-import * as pdfFonts from 'pdfmake/build/vfs_fonts';
-// inicializar fuentes vfs
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
+
+// Asignar vfs a la instancia de pdfMake
 (pdfMake as any).vfs = (pdfFonts as any).pdfMake.vfs;
 
 type Column = { field: string; header: string };

@@ -17,6 +17,7 @@ export default [
     { path: 'aboutus', component: AboutUs },
     { path: 'help', component: Help, data: { breadcrumb: 'Help' } },
     { path: 'contact', component: ContactUs },
-    { path: 'reportes', component: Reportes, data: { breadcrumb: 'Reportes' } },
+    // Alias: si alguien navega a /pages/reportes, redirigir a /reportes
+    { path: 'reportes', redirectTo: '/reportes' },
     { path: '**', redirectTo: '/notfound' }
 ] as Routes;

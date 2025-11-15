@@ -23,6 +23,11 @@
                         "polyfills": [
                             "zone.js"
                         ],
+                        "allowedCommonJsDependencies": [
+                            "file-saver",
+                            "pdfmake",
+                            "quill-delta"
+                        ],
                         "tsConfig": "tsconfig.app.json",
                         "inlineStyleLanguage": "scss",
                         "assets": [
