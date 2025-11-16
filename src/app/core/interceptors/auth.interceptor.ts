@@ -2,15 +2,17 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { Router } from '@angular/router';
+import { AuthService } from '@/core/services/auth.service';
 
 /**
  * Interceptor HTTP para agregar token de autenticación y manejar errores globales
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const router = inject(Router);
-    
-    // Obtener token del localStorage (ajusta según tu implementación)
-    const token = localStorage.getItem('auth_token');
+    const auth = inject(AuthService);
+
+    // Obtener token del localStorage usando nuestra clave
+    const token = localStorage.getItem('inventarioplus_token');
     
     // Clonar la petición y agregar el token si existe
     let authReq = req;
@@ -27,7 +29,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         catchError((error: HttpErrorResponse) => {
             // Si el error es 401 (No autorizado), redirigir al login
             if (error.status === 401) {
-                localStorage.removeItem('auth_token');
+                // clear our token and navigate to canonical login
+                auth.clearLocalToken(false, true);
                 router.navigate(['/auth/login2']);
             }
             

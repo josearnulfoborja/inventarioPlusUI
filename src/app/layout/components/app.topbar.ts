@@ -1,5 +1,5 @@
 import { Component, ElementRef, inject, ViewChild } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { StyleClassModule } from 'primeng/styleclass';
 import { LayoutService } from '@/layout/service/layout.service';
@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { RippleModule } from 'primeng/ripple';
+import { AuthService } from '@/core/services/auth.service';
 
 @Component({
     selector: '[app-topbar]',
@@ -123,6 +124,11 @@ import { RippleModule } from 'primeng/ripple';
                             <i class="pi pi-palette"></i>
                         </button>
                     </li>
+                    <li>
+                        <button class="app-logout-button" (click)="logout()" title="Logout" [disabled]="isLoggingOut">
+                            <i class="pi pi-sign-out"></i>
+                        </button>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -133,7 +139,12 @@ export class AppTopbar {
 
     @ViewChild('mobileMenuButton') mobileMenuButton!: ElementRef;
 
+    private router: Router = inject(Router);
+    private authService: AuthService = inject(AuthService);
+
     constructor(public el: ElementRef) {}
+
+    isLoggingOut: boolean = false;
 
     activeItem!: number;
 
@@ -153,5 +164,26 @@ export class AppTopbar {
 
     onConfigSidebarToggle() {
         this.layoutService.showConfigSidebar();
+    }
+
+    logout() {
+        if (this.isLoggingOut) return;
+        this.isLoggingOut = true;
+        console.log('Logout clicked');
+
+        this.authService.revokeTokenAndClear().subscribe({
+            next: () => {
+                console.log('Server token revoke succeeded (or not required)');
+            },
+            error: (err) => {
+                console.error('Server token revoke failed', err);
+                // ensure local clear if something unexpected happened
+                this.authService.clearLocalToken(true, true);
+            },
+            complete: () => {
+                console.log('Logout flow complete');
+                this.isLoggingOut = false;
+            }
+        });
     }
 }

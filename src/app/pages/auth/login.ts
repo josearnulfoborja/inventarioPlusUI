@@ -1,8 +1,11 @@
 import { Component, computed, inject } from '@angular/core';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '@/core/services/auth.service';
 import { LayoutService } from '@/layout/service/layout.service';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -13,7 +16,7 @@ import { AppConfigurator } from '@/layout/components/app.configurator';
 @Component({
     selector: 'app-login',
     standalone: true,
-    imports: [CheckboxModule, InputTextModule, FormsModule, RouterModule, IconFieldModule, InputIconModule, ButtonModule, FluidModule, AppConfigurator],
+    imports: [CommonModule, CheckboxModule, InputTextModule, FormsModule, RouterModule, IconFieldModule, InputIconModule, ButtonModule, FluidModule, AppConfigurator],
     template: `
         <div class="overflow-hidden margin-0 relative h-screen">
             <div class="bg-cover bg-center" style="background-image: url('/layout/images/pages/login/bg-login.jpg'); height: calc(100% - 370px);"></div>
@@ -30,20 +33,23 @@ import { AppConfigurator } from '@/layout/components/app.configurator';
                         <div class="col-span-12 text-left">
                             <label class="text-surface-400 dark:text-surface-600 mb-1">Username</label>
                             <div class="mt-1">
-                                <input type="text" placeholder="Username" pInputText />
+                                <input type="text" placeholder="Username" pInputText [(ngModel)]="username" />
                             </div>
                         </div>
                         <div class="col-span-12 text-left">
                             <label class="text-surface-400 dark:text-surface-600 mb-1">Password</label>
                             <div class="mt-1">
-                                <input type="password" placeholder="Password" pInputText />
+                                <input type="password" placeholder="Password" pInputText [(ngModel)]="password" />
                             </div>
                         </div>
                         <div class="col-span-12 md:col-span-6">
-                            <button pButton pRipple type="button" [routerLink]="['/']" label="Sign In"></button>
+                            <button pButton pRipple type="button" (click)="submit()" [disabled]="loading" label="Sign In"></button>
                         </div>
                         <div class="col-span-12 md:col-span-6">
                             <button pButton pRipple class="!text-gray-300 hover:!text-gray-900 dark:!text-gray-600 flex justify-center" text>Forgot Password?</button>
+                        </div>
+                        <div class="col-span-12">
+                            <div *ngIf="error" class="text-red-500 mt-2">{{ error }}</div>
                         </div>
                     </div>
                 </div>
@@ -55,7 +61,31 @@ import { AppConfigurator } from '@/layout/components/app.configurator';
 export class Login {
     rememberMe: boolean = false;
 
+    username: string = '';
+    password: string = '';
+    loading: boolean = false;
+    error: string | null = null;
+
     LayoutService = inject(LayoutService);
+    private readonly router = inject(Router);
+    private readonly auth = inject(AuthService);
 
     isDarkTheme = computed(() => this.LayoutService.isDarkTheme());
+
+    async submit() {
+        this.error = null;
+        this.loading = true;
+        try {
+            await firstValueFrom(this.auth.login(this.username, this.password));
+            // navigate to root
+            const returnUrl = '/';
+            this.router.navigateByUrl(returnUrl);
+        } catch (e: any) {
+            // Prefer backend provided message if available (e.error.message), otherwise use exception message
+            const backendMsg = e?.error?.message || e?.error?.data?.message;
+            this.error = backendMsg || e?.message || 'Error al autenticar';
+        } finally {
+            this.loading = false;
+        }
+    }
 }

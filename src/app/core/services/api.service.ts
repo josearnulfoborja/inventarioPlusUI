@@ -4,6 +4,7 @@ import { Observable, throwError, catchError, map } from 'rxjs';
 import { timeout } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { ApiResponse, PaginatedResponse, RequestOptions } from '@/core/models/api.model';
+import { AuthService } from './auth.service';
 
 /**
  * Servicio centralizado para todas las peticiones HTTP al servidor
@@ -16,7 +17,7 @@ export class ApiService {
     private readonly apiUrl = environment.apiUrl;
     private readonly timeout = environment.apiTimeout;
 
-    constructor(private readonly http: HttpClient) {}
+    constructor(private readonly http: HttpClient, private readonly authService: AuthService) {}
 
     /**
      * Petición GET
@@ -133,9 +134,12 @@ export class ApiService {
     downloadFile(endpoint: string, filename: string): Observable<Blob> {
         // Allow passing an absolute URL (http://...) or a relative endpoint
         const url = endpoint.startsWith('http') ? endpoint : this.buildUrl(endpoint);
+        const httpOptions = this.buildHttpOptions();
 
         return this.http.get(url, {
-            responseType: 'blob'
+            responseType: 'blob',
+            headers: httpOptions.headers,
+            params: httpOptions.params
         }).pipe(
             timeout(this.timeout),
             map(blob => {
@@ -209,6 +213,14 @@ export class ApiService {
         if (options?.headers) {
             for (const key of Object.keys(options.headers)) {
                 httpHeaders = httpHeaders.set(key, options.headers[key]);
+            }
+        }
+
+        // Add Authorization header when a token is present
+        if (this.authService && typeof this.authService.getToken === 'function') {
+            const token = this.authService.getToken();
+            if (token) {
+                httpHeaders = httpHeaders.set('Authorization', `Bearer ${token}`);
             }
         }
 
