@@ -6,6 +6,7 @@ import { Invoice } from './invoice/invoice';
 import { AboutUs } from './aboutus/aboutus';
 import { Help } from './help/help';
 import { ContactUs } from './contactus/contactus';
+import { Reportes } from './reportes/reportes';
 
 export default [
     { path: 'documentation', component: Documentation },
@@ -16,5 +17,7 @@ export default [
     { path: 'aboutus', component: AboutUs },
     { path: 'help', component: Help, data: { breadcrumb: 'Help' } },
     { path: 'contact', component: ContactUs },
+    // Alias: si alguien navega a /pages/reportes, redirigir a /reportes
+    { path: 'reportes', redirectTo: '/reportes' },
     { path: '**', redirectTo: '/notfound' }
 ] as Routes;

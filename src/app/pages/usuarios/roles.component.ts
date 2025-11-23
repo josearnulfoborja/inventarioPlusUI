@@ -1,8 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RolService } from '@/core/services/rol.service';
 import { Rol } from '@/core/models/inventario.model';
 import { ApiError } from '@/core/models/api.model';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
+import { MessageService } from 'primeng/api';
 
 /**
  * Componente para listar y gestionar roles del sistema
@@ -10,16 +17,28 @@ import { ApiError } from '@/core/models/api.model';
 @Component({
     selector: 'app-roles',
     standalone: true,
-    imports: [CommonModule],
+    imports: [
+        CommonModule, 
+        FormsModule,
+        DialogModule,
+        ButtonModule,
+        InputTextModule,
+        ToastModule,
+        TooltipModule
+    ],
+    providers: [MessageService],
     template: `
+        <p-toast></p-toast>
+        
         <div class="card">
             <div class="card-header flex justify-between items-center">
                 <h2 class="text-2xl font-bold">Gestión de Roles</h2>
-                <button 
-                    (click)="nuevoRol()" 
-                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    <i class="pi pi-plus"></i> Nuevo Rol
-                </button>
+                <p-button 
+                    (click)="mostrarDialogoNuevo()" 
+                    icon="pi pi-plus"
+                    label="Nuevo Rol"
+                    styleClass="p-button-primary">
+                </p-button>
             </div>
 
             <!-- Loading -->
@@ -64,7 +83,7 @@ import { ApiError } from '@/core/models/api.model';
                             <tr *ngFor="let rol of roles" class="border-b hover:bg-gray-50">
                                 <td class="px-4 py-3">
                                     <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
-                                        {{ rol.id }}
+                                        {{ obtenerIdRol(rol) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 font-semibold">{{ rol.nombreRol }}</td>
@@ -73,24 +92,22 @@ import { ApiError } from '@/core/models/api.model';
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex gap-2 justify-center">
-                                        <button 
-                                            (click)="verDetalles(rol)" 
-                                            class="text-blue-500 hover:text-blue-700"
-                                            title="Ver detalles">
-                                            <i class="pi pi-eye"></i>
-                                        </button>
-                                        <button 
-                                            (click)="editarRol(rol)" 
-                                            class="text-yellow-500 hover:text-yellow-700"
-                                            title="Editar">
-                                            <i class="pi pi-pencil"></i>
-                                        </button>
-                                        <button 
-                                            (click)="eliminarRol(rol.id!)" 
-                                            class="text-red-500 hover:text-red-700"
-                                            title="Eliminar">
-                                            <i class="pi pi-trash"></i>
-                                        </button>
+                                        <p-button 
+                                            (onClick)="mostrarDialogoEditar(rol)" 
+                                            icon="pi pi-pencil"
+                                            [rounded]="true"
+                                            [text]="true"
+                                            severity="warn"
+                                            pTooltip="Editar">
+                                        </p-button>
+                                        <p-button 
+                                            (onClick)="confirmarEliminar(obtenerIdRol(rol))" 
+                                            icon="pi pi-trash"
+                                            [rounded]="true"
+                                            [text]="true"
+                                            severity="danger"
+                                            pTooltip="Eliminar">
+                                        </p-button>
                                     </div>
                                 </td>
                             </tr>
@@ -111,6 +128,105 @@ import { ApiError } from '@/core/models/api.model';
                 </div>
             </div>
         </div>
+
+        <!-- Diálogo para crear/editar rol -->
+        <p-dialog 
+            [(visible)]="mostrarDialogo" 
+            [header]="modoEdicion ? 'Editar Rol' : 'Nuevo Rol'"
+            [modal]="true"
+            [style]="{width: '450px'}"
+            [draggable]="false"
+            [resizable]="false">
+            
+            <div class="flex flex-col gap-4 p-4">
+                <div class="flex flex-col gap-2">
+                    <label for="nombreRol" class="font-semibold">
+                        Nombre del rol <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        id="nombreRol"
+                        type="text" 
+                        pInputText 
+                        [(ngModel)]="rolFormulario.nombreRol"
+                        placeholder="Ej: ADMINISTRADOR"
+                        class="w-full"
+                        [class.ng-invalid]="nombreRolInvalido"
+                        maxlength="50" />
+                    <small *ngIf="nombreRolInvalido" class="text-red-500">
+                        El nombre del rol es obligatorio
+                    </small>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="descripcion" class="font-semibold">
+                        Descripción
+                    </label>
+                    <textarea 
+                        id="descripcion"
+                        pTextarea 
+                        [(ngModel)]="rolFormulario.descripcion"
+                        placeholder="Descripción opcional del rol"
+                        rows="3"
+                        class="w-full"
+                        maxlength="200">
+                    </textarea>
+                </div>
+            </div>
+
+            <ng-template pTemplate="footer">
+                <div class="flex gap-2 justify-end">
+                    <p-button 
+                        label="Cancelar" 
+                        icon="pi pi-times"
+                        (onClick)="cerrarDialogo()"
+                        styleClass="p-button-text">
+                    </p-button>
+                    <p-button 
+                        [label]="modoEdicion ? 'Actualizar' : 'Crear'" 
+                        icon="pi pi-check"
+                        (onClick)="guardarRol()"
+                        [disabled]="!rolFormulario.nombreRol?.trim()"
+                        [loading]="guardando">
+                    </p-button>
+                </div>
+            </ng-template>
+        </p-dialog>
+
+        <!-- Diálogo de confirmación para eliminar -->
+        <p-dialog 
+            [(visible)]="mostrarDialogoEliminar" 
+            header="Confirmar eliminación"
+            [modal]="true"
+            [style]="{width: '400px'}"
+            [draggable]="false"
+            [resizable]="false">
+            
+            <div class="flex items-start gap-3 p-4">
+                <i class="pi pi-exclamation-triangle text-3xl text-red-500"></i>
+                <div>
+                    <p class="font-semibold mb-2">¿Está seguro de eliminar este rol?</p>
+                    <p class="text-sm text-gray-600">Esta acción no se puede deshacer.</p>
+                </div>
+            </div>
+
+            <ng-template pTemplate="footer">
+                <div class="flex gap-2 justify-end">
+                    <p-button 
+                        label="Cancelar" 
+                        icon="pi pi-times"
+                        (onClick)="mostrarDialogoEliminar = false"
+                        styleClass="p-button-text">
+                    </p-button>
+                    <p-button 
+                        label="Eliminar" 
+                        icon="pi pi-trash"
+                        (onClick)="eliminarRol()"
+                        severity="danger"
+                        [loading]="eliminando">
+                    </p-button>
+                </div>
+            </ng-template>
+        </p-dialog>
     `,
     styles: [`
         .card {
@@ -128,8 +244,23 @@ export class RolesComponent implements OnInit {
     roles: Rol[] = [];
     isLoading = false;
     error: string | null = null;
+    
+    // Diálogo de crear/editar
+    mostrarDialogo = false;
+    modoEdicion = false;
+    guardando = false;
+    rolFormulario: Partial<Rol> = {};
+    nombreRolInvalido = false;
+    
+    // Diálogo de eliminar
+    mostrarDialogoEliminar = false;
+    eliminando = false;
+    idRolEliminar: number | null = null;
 
-    constructor(private readonly rolService: RolService) {}
+    constructor(
+        private readonly rolService: RolService,
+        private readonly messageService: MessageService
+    ) {}
 
     ngOnInit(): void {
         this.cargarRoles();
@@ -151,63 +282,143 @@ export class RolesComponent implements OnInit {
         });
     }
 
+    obtenerIdRol(rol: Rol): number {
+        return rol.id || rol.idRol || 0;
+    }
+
     verDetalles(rol: Rol): void {
-        const detalles = `
-ID: ${rol.id}
-Nombre: ${rol.nombreRol}
-Descripción: ${rol.descripcion || 'Sin descripción'}
-        `.trim();
-        alert(detalles);
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Detalles del Rol',
+            detail: `ID: ${this.obtenerIdRol(rol)} - ${rol.nombreRol}`,
+            life: 3000
+        });
     }
 
-    nuevoRol(): void {
-        const nombreRol = prompt('Nombre del rol:');
-        if (nombreRol) {
-            const descripcion = prompt('Descripción (opcional):');
-            const nuevoRol: Rol = {
-                nombreRol,
-                descripcion: descripcion || undefined
-            };
-
-            this.rolService.crearRol(nuevoRol).subscribe({
-                next: () => {
-                    alert('Rol creado exitosamente');
-                    this.cargarRoles();
-                },
-                error: (err: ApiError) => alert(`Error: ${err.message}`)
-            });
-        }
+    mostrarDialogoNuevo(): void {
+        this.modoEdicion = false;
+        this.rolFormulario = {
+            nombreRol: '',
+            descripcion: ''
+        };
+        this.nombreRolInvalido = false;
+        this.mostrarDialogo = true;
     }
 
-    editarRol(rol: Rol): void {
-        const nuevoNombre = prompt('Nuevo nombre del rol:', rol.nombreRol);
-        if (nuevoNombre && nuevoNombre !== rol.nombreRol) {
-            const nuevaDescripcion = prompt('Nueva descripción:', rol.descripcion || '');
-            const rolActualizado: Rol = {
-                id: rol.id,
-                nombreRol: nuevoNombre,
-                descripcion: nuevaDescripcion || undefined
-            };
-
-            this.rolService.actualizarRol(rol.id!, rolActualizado).subscribe({
-                next: () => {
-                    alert('Rol actualizado exitosamente');
-                    this.cargarRoles();
-                },
-                error: (err: ApiError) => alert(`Error: ${err.message}`)
-            });
-        }
+    mostrarDialogoEditar(rol: Rol): void {
+        this.modoEdicion = true;
+        const rolId = rol.id || (rol as any).idRol;
+        console.log('Editando rol:', rol, 'ID extraído:', rolId);
+        this.rolFormulario = {
+            id: rolId,
+            nombreRol: rol.nombreRol,
+            descripcion: rol.descripcion || ''
+        };
+        this.nombreRolInvalido = false;
+        this.mostrarDialogo = true;
     }
 
-    eliminarRol(id: number): void {
-        if (confirm('¿Está seguro de eliminar este rol? Esta acción no se puede deshacer.')) {
-            this.rolService.eliminarRol(id).subscribe({
-                next: () => {
-                    alert('Rol eliminado exitosamente');
-                    this.cargarRoles();
-                },
-                error: (err: ApiError) => alert(`Error: ${err.message}`)
-            });
+    cerrarDialogo(): void {
+        this.mostrarDialogo = false;
+        this.rolFormulario = {};
+        this.nombreRolInvalido = false;
+        this.guardando = false;
+    }
+
+    guardarRol(): void {
+        if (!this.rolFormulario.nombreRol?.trim()) {
+            this.nombreRolInvalido = true;
+            return;
         }
+
+        this.guardando = true;
+        this.nombreRolInvalido = false;
+
+        const rol: Rol = {
+            nombreRol: this.rolFormulario.nombreRol.trim(),
+            descripcion: this.rolFormulario.descripcion?.trim() || undefined
+        };
+
+        if (this.modoEdicion && this.rolFormulario.id) {
+            rol.id = this.rolFormulario.id;
+        }
+
+        const operacion = this.modoEdicion && rol.id
+            ? this.rolService.actualizarRol(rol.id, rol)
+            : this.rolService.crearRol(rol);
+
+        operacion.subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: `Rol ${this.modoEdicion ? 'actualizado' : 'creado'} exitosamente`,
+                    life: 3000
+                });
+                this.cerrarDialogo();
+                this.cargarRoles();
+            },
+            error: (err: ApiError) => {
+                this.guardando = false;
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: err.message,
+                    life: 5000
+                });
+            }
+        });
+    }
+
+    confirmarEliminar(id: number): void {
+        this.idRolEliminar = id;
+        this.mostrarDialogoEliminar = true;
+    }
+
+    eliminarRol(): void {
+        if (!this.idRolEliminar) {
+            return;
+        }
+
+        this.eliminando = true;
+        this.rolService.eliminarRol(this.idRolEliminar).subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: 'Rol eliminado exitosamente',
+                    life: 3000
+                });
+                this.mostrarDialogoEliminar = false;
+                this.eliminando = false;
+                this.idRolEliminar = null;
+                this.cargarRoles();
+            },
+            error: (err: ApiError) => {
+                // Si el error es de parseo JSON pero el status es 200, considerarlo éxito
+                if (err.statusCode === 200 || (err as any).original?.name === 'SyntaxError') {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Éxito',
+                        detail: 'Rol eliminado exitosamente',
+                        life: 3000
+                    });
+                    this.mostrarDialogoEliminar = false;
+                    this.eliminando = false;
+                    this.idRolEliminar = null;
+                    this.cargarRoles();
+                } else {
+                    this.mostrarDialogoEliminar = false;
+                    this.eliminando = false;
+                    this.idRolEliminar = null;
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error al eliminar',
+                        detail: err.message || 'No se pudo eliminar el rol',
+                        life: 5000
+                    });
+                }
+            }
+        });
     }
 }

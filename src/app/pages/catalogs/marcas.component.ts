@@ -82,18 +82,81 @@ export class MarcasComponent implements OnInit {
   editar(m: Marca) { this.form = { ...m }; this.editingId = m.id; this.mostrarFormulario = true; }
 
   guardar() {
-    const payload = { nombre: this.form.nombre, activo: !!this.form.activo } as Marca;
+    // Validación básica
+    if (!this.form.nombre || this.form.nombre.trim() === '') {
+      alert('El nombre es requerido');
+      return;
+    }
+
+    const ahora = new Date().toISOString();
+    const payload = { 
+      nombre: this.form.nombre.trim(), 
+      activo: this.form.activo !== undefined ? this.form.activo : true,
+      createdAt: ahora,
+      updatedAt: ahora
+    } as Marca;
+    
+    console.log('Guardando marca:', payload);
+    
     if (this.editingId) {
-      this.service.actualizar(this.editingId, payload).subscribe({ next: () => { this.mostrarFormulario = false; this.load(); }, error: () => alert('Error al actualizar') });
+      // En actualización, solo enviamos updatedAt
+      const updatePayload = {
+        nombre: payload.nombre,
+        activo: payload.activo,
+        updatedAt: ahora
+      } as Marca;
+      
+      this.service.actualizar(this.editingId, updatePayload).subscribe({ 
+        next: () => { 
+          this.mostrarFormulario = false; 
+          this.load(); 
+        }, 
+        error: (err) => {
+          console.error('Error al actualizar marca:', err);
+          alert('Error al actualizar: ' + (err?.error?.message || err?.message || JSON.stringify(err)));
+        }
+      });
     } else {
-      this.service.crear(payload).subscribe({ next: () => { this.mostrarFormulario = false; this.load(); }, error: () => alert('Error al crear') });
+      this.service.crear(payload).subscribe({ 
+        next: () => { 
+          this.mostrarFormulario = false; 
+          this.load(); 
+        }, 
+        error: (err) => {
+          console.error('Error al crear marca:', err);
+          alert('Error al crear: ' + (err?.error?.message || err?.message || JSON.stringify(err)));
+        }
+      });
     }
   }
 
   eliminar(id?: number) {
-    if (!id) return;
-    if (!confirm('Eliminar marca?')) return;
-    this.service.eliminar(id).subscribe({ next: () => this.load(), error: () => alert('Error al eliminar') });
+    if (!id) {
+      alert('ID de marca no válido');
+      return;
+    }
+    if (!confirm('¿Eliminar marca?')) return;
+    
+    console.log('Eliminando marca con ID:', id);
+    
+    this.service.eliminar(id).subscribe({ 
+      next: () => {
+        console.log('Marca eliminada exitosamente');
+        this.load();
+      }, 
+      error: (err) => {
+        console.error('Error al eliminar marca:', err);
+        
+        // Si el backend devuelve status 200 pero con texto plano (error de parseo JSON)
+        if (err.statusCode === 200 || (err as any).original?.name === 'SyntaxError') {
+          console.log('Eliminación exitosa a pesar del error de parseo');
+          this.load();
+          return;
+        }
+        
+        alert('Error al eliminar: ' + (err?.message || JSON.stringify(err)));
+      }
+    });
   }
 
   cancelar() { this.mostrarFormulario = false; }

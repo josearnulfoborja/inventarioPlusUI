@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { ApiService } from './api.service';
 import { TipoEquipo } from '@/core/models/inventario.model';
 
@@ -37,6 +38,17 @@ export class TipoEquipoService {
     }
 
     eliminar(id: number) {
-        return this.api.delete(`${this.base}/${id}`);
+        return this.api.delete(`${this.base}/${id}`).pipe(
+            catchError((err) => {
+                // Si el error es por parseo JSON pero el status es 200 o statusCode 200, considerarlo éxito
+                console.log('Error capturado en eliminar():', err);
+                if (err.status === 200 || err.statusCode === 200 || 
+                    (err.message && err.message.includes('is not valid JSON') && err.status === 200)) {
+                    return of({ success: true });
+                }
+                throw err;
+            }),
+            map(() => ({ success: true }))
+        );
     }
 }
