@@ -5,7 +5,7 @@ import { ApiService } from '@/core/services/api.service';
 export interface Especialista {
   idEspecialista?: number;
   nombre: string;
-  disponibilidad: boolean;
+  disponibilidad: string;
 }
 
 /**

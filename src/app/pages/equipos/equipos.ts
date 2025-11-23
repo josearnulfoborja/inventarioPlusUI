@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Equipo } from '@/core/models/inventario.model';
+import { Equipo, Prestamo } from '@/core/models/inventario.model';
+import { ApiResponse } from '@/core/models/api.model';
 import { EquipoService } from '@/core/services/equipo.service';
 import { EquipoFormComponent } from '@/pages/equipos/equipo-form.component';
 import { forkJoin } from 'rxjs';
@@ -9,6 +10,7 @@ import { TipoEquipoService } from '@/core/services/tipo-equipo.service';
 import { ModeloService } from '@/core/services/modelo.service';
 import { UbicacionService } from '@/core/services/ubicacion.service';
 import { MarcaService } from '@/core/services/marca.service';
+import { PrestamoService } from '@/core/services/prestamo.service';
 
 @Component({
     selector: 'app-equipos',
@@ -83,7 +85,8 @@ export class Equipos implements OnInit {
         private readonly tipoService: TipoEquipoService,
         private readonly modeloService: ModeloService,
         private readonly ubicacionService: UbicacionService,
-        private readonly marcaService: MarcaService
+        private readonly marcaService: MarcaService,
+        private readonly prestamoService: PrestamoService
     ) {}
 
     // helper used in templates to safely access dynamic props without parser errors
@@ -129,6 +132,7 @@ export class Equipos implements OnInit {
                 console.log('Loaded ubicaciones count:', (ubicaciones || []).length, 'sample:', (ubicaciones || [])[0]);
                 if (equipos?.length) {
                     console.log('Equipo[0] keys:', Object.keys(equipos[0]));
+                    console.log('Equipo[0] COMPLETO con todos sus valores:', JSON.stringify(equipos[0], null, 2));
                 }
 
                 // build maps
@@ -285,10 +289,50 @@ export class Equipos implements OnInit {
 
     eliminarEquipo(id?: number) {
         if (!id) return;
-        if (!confirm('¿Seguro que deseas eliminar este equipo?')) return;
+        if (!confirm('¿Seguro que deseas eliminar este equipo? Se eliminarán también todos los préstamos asociados.')) return;
+        
+        // Primero obtener los préstamos relacionados con este equipo
+        this.prestamoService.getPrestamosPorEquipo(id).subscribe({
+            next: (response: ApiResponse<Prestamo[]>) => {
+                const prestamos = response.data || [];
+                
+                // Si hay préstamos, eliminarlos primero
+                if (prestamos.length > 0) {
+                    // Eliminar todos los préstamos en paralelo
+                    const eliminarPrestamos$ = prestamos.map((prestamo: Prestamo) => 
+                        this.prestamoService.eliminarPrestamo(prestamo.idPrestamo)
+                    );
+                    
+                    forkJoin(eliminarPrestamos$).subscribe({
+                        next: () => {
+                            // Una vez eliminados los préstamos, eliminar el equipo
+                            this.eliminarEquipoFinal(id);
+                        },
+                        error: (err: any) => {
+                            console.error('Error al eliminar préstamos:', err);
+                            alert('Error al eliminar los préstamos asociados');
+                        }
+                    });
+                } else {
+                    // No hay préstamos, eliminar directamente el equipo
+                    this.eliminarEquipoFinal(id);
+                }
+            },
+            error: (err: any) => {
+                console.error('Error al verificar préstamos:', err);
+                // Intentar eliminar el equipo de todas formas
+                this.eliminarEquipoFinal(id);
+            }
+        });
+    }
+    
+    private eliminarEquipoFinal(id: number) {
         this.equipoService.eliminarEquipo(id).subscribe({
-            next: () => this.cargarEquipos(),
-            error: (err) => {
+            next: () => {
+                alert('Equipo eliminado correctamente');
+                this.cargarEquipos();
+            },
+            error: (err: any) => {
                 console.error(err);
                 alert('Error al eliminar el equipo');
             }

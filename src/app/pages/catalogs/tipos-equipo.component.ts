@@ -22,6 +22,7 @@ import { TipoEquipoService } from '@/core/services/tipo-equipo.service';
           <table class="min-w-full divide-y divide-gray-200" *ngIf="!cargando && tipos.length > 0">
             <thead class="bg-gray-50">
               <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activo</th>
@@ -30,6 +31,7 @@ import { TipoEquipoService } from '@/core/services/tipo-equipo.service';
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr *ngFor="let s of tipos">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ s.codigo }}</td>
                 <td class="px-6 py-4 whitespace-normal text-sm text-gray-700">{{ s.nombre }}</td>
                 <td class="px-6 py-4 whitespace-normal text-sm text-gray-600">{{ s.descripcion }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ s.activo ? 'Sí' : 'No' }}</td>
@@ -47,6 +49,7 @@ import { TipoEquipoService } from '@/core/services/tipo-equipo.service';
 
         <div *ngIf="mostrarFormulario" class="mt-4 bg-white p-4 rounded-md border border-gray-100">
           <div class="grid grid-cols-1 gap-3">
+            <input placeholder="Código" [(ngModel)]="form.codigo" class="input" />
             <input placeholder="Nombre" [(ngModel)]="form.nombre" class="input" />
             <input placeholder="Descripción" [(ngModel)]="form.descripcion" class="input" />
             <label class="flex items-center gap-2">
@@ -68,7 +71,7 @@ export class TiposEquipoComponent implements OnInit {
   cargando = false;
   error: string | null = null;
   mostrarFormulario = false;
-  form: Partial<TipoEquipo> = { nombre: '', descripcion: '', activo: true };
+  form: Partial<TipoEquipo> = { codigo: '', nombre: '', descripcion: '', activo: true };
   editingId?: number;
 
     constructor(private readonly service: TipoEquipoService) {}
@@ -79,14 +82,35 @@ export class TiposEquipoComponent implements OnInit {
       this.error = null;
       this.service.listar().subscribe({ next: (r) => { console.log('TipoEquipoService.listar() result:', r); this.tipos = r; this.cargando = false; }, error: (e) => { console.error('Error loading tipos:', e); this.error = 'Error cargando tipos: ' + (e?.message ?? JSON.stringify(e)); this.cargando = false; } });
     }
-    nuevo() { this.form = { nombre: '', descripcion: '', activo: true }; this.editingId = undefined; this.mostrarFormulario = true; }
+    nuevo() { this.form = { codigo: '', nombre: '', descripcion: '', activo: true }; this.editingId = undefined; this.mostrarFormulario = true; }
     editar(t: TipoEquipo) { this.form = { ...t }; this.editingId = t.id; this.mostrarFormulario = true; }
     guardar() {
-      const payload = { nombre: this.form.nombre, descripcion: this.form.descripcion, activo: !!this.form.activo } as TipoEquipo;
+      const now = new Date().toISOString();
+      const payload: any = { 
+        codigo: this.form.codigo, 
+        nombre: this.form.nombre, 
+        descripcion: this.form.descripcion, 
+        activo: !!this.form.activo,
+        updatedAt: now
+      };
+      
       if (this.editingId) {
-        this.service.actualizar(this.editingId, payload).subscribe({ next: () => { this.mostrarFormulario = false; this.load(); }, error: () => alert('Error al actualizar') });
+        this.service.actualizar(this.editingId, payload).subscribe({ 
+          next: () => { this.mostrarFormulario = false; this.load(); }, 
+          error: (err) => {
+            console.error('Error al actualizar:', err);
+            this.error = 'Error al actualizar: ' + (err?.message || 'Error desconocido');
+          }
+        });
       } else {
-        this.service.crear(payload).subscribe({ next: () => { this.mostrarFormulario = false; this.load(); }, error: () => alert('Error al crear') });
+        payload.createdAt = now;
+        this.service.crear(payload).subscribe({ 
+          next: () => { this.mostrarFormulario = false; this.load(); }, 
+          error: (err) => {
+            console.error('Error al crear:', err);
+            this.error = 'Error al crear: ' + (err?.message || 'Error en el servidor. Verifica que todos los campos estén completos.');
+          }
+        });
       }
     }
   eliminar(id?: number) {

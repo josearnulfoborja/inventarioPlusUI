@@ -120,17 +120,36 @@ export class UsuariosComponent implements OnInit {
     return '-';
   }
 
+  // Helper to get the ID of a Rol object
+  getRoleId(r: Rol): number {
+    return (r as any).idRol ?? r.id ?? 0;
+  }
+
   // Helper to compute the display label for a Rol object.
   // We cast to `any` inside to avoid template type-checking issues for alternate fields.
   getRoleLabel(r: Rol): string {
-    return r.nombreRol ?? (r as any).nombre ?? (r as any).name ?? String(r.id ?? '');
+    return r.nombreRol ?? (r as any).nombre ?? (r as any).name ?? String((r as any).idRol ?? r.id ?? '');
   }
 
   nuevoUsuario() {
+    // Obtener el ID del primer rol (usar idRol que es el campo correcto)
+    const firstRole = this.roles[0];
+    const defaultRolId = (firstRole as any)?.idRol ?? firstRole?.id ?? 2;
+    
     this.usuarioSeleccionado = {
-      nombre: '', apellido: '', correoElectronico: '', telefono: '',
-      username: '', password: '', rolId: 1, activo: true, dui: ''
+      nombre: '', 
+      apellido: '', 
+      correoElectronico: '', 
+      telefono: null as any,
+      username: '', 
+      password: '', 
+      rolId: defaultRolId, 
+      activo: true, 
+      dui: null as any
     };
+    
+    console.log('Nuevo usuario creado con rolId:', defaultRolId);
+    
     this.mostrarFormulario = true;
     this.esEdicion = false;
   }
@@ -142,17 +161,89 @@ export class UsuariosComponent implements OnInit {
   }
 
   guardarUsuario() {
-    if (this.esEdicion && this.usuarioSeleccionado?.idUsuario) {
-      this.usuariosService.actualizarUsuario(this.usuarioSeleccionado.idUsuario, this.usuarioSeleccionado)
-        .subscribe(() => {
-          this.cargarUsuarios();
-          this.mostrarFormulario = false;
+    if (!this.usuarioSeleccionado) return;
+
+    // Validar campos requeridos
+    const usuario = this.usuarioSeleccionado;
+    
+    console.log('DEBUG - rolId antes de validar:', usuario.rolId, 'tipo:', typeof usuario.rolId);
+    
+    if (!usuario.nombre?.trim() || !usuario.apellido?.trim() || 
+        !usuario.correoElectronico?.trim() || !usuario.username?.trim()) {
+      alert('Por favor complete todos los campos requeridos (Nombre, Apellido, Correo, Username)');
+      return;
+    }
+
+    // Validar rolId - puede ser number o string convertible a number
+    const rolIdNum = Number(usuario.rolId);
+    if (!usuario.rolId || isNaN(rolIdNum) || rolIdNum <= 0) {
+      alert('Por favor seleccione un rol válido');
+      return;
+    }
+
+    if (!this.esEdicion && !usuario.password?.trim()) {
+      alert('La contraseña es requerida para crear un nuevo usuario');
+      return;
+    }
+    
+    // Preparar datos en formato camelCase (como espera el backend Java)
+    const usuarioData: any = {
+      nombre: usuario.nombre.trim(),
+      apellido: usuario.apellido.trim(),
+      correoElectronico: usuario.correoElectronico.trim(),
+      username: usuario.username.trim(),
+      rolId: typeof usuario.rolId === 'string' ? Number(usuario.rolId) : usuario.rolId,
+      activo: usuario.activo ?? true
+    };
+
+    // Campos opcionales - solo agregar si tienen valor
+    if (usuario.telefono?.trim()) {
+      usuarioData.telefono = usuario.telefono.trim();
+    }
+    
+    if (usuario.dui?.trim()) {
+      usuarioData.dui = usuario.dui.trim();
+    }
+
+    // Password: requerido para creación, opcional para edición
+    if (this.esEdicion && usuario.idUsuario) {
+      usuarioData.idUsuario = usuario.idUsuario;
+      // Solo enviar password si se proporcionó uno nuevo
+      if (usuario.password?.trim()) {
+        usuarioData.password = usuario.password.trim();
+      }
+    } else {
+      // Para creación, password es requerido
+      usuarioData.password = usuario.password.trim();
+    }
+
+    console.log('Enviando datos al backend:', usuarioData);
+
+    if (this.esEdicion && usuarioData.idUsuario) {
+      this.usuariosService.actualizarUsuario(usuarioData.idUsuario, usuarioData)
+        .subscribe({
+          next: () => {
+            this.cargarUsuarios();
+            this.mostrarFormulario = false;
+            alert('Usuario actualizado exitosamente');
+          },
+          error: (error) => {
+            console.error('Error al actualizar usuario:', error);
+            alert(`Error al actualizar usuario: ${error.error?.message || error.message || 'Error desconocido'}`);
+          }
         });
     } else {
-      this.usuariosService.crearUsuario(this.usuarioSeleccionado!)
-        .subscribe(() => {
-          this.cargarUsuarios();
-          this.mostrarFormulario = false;
+      this.usuariosService.crearUsuario(usuarioData)
+        .subscribe({
+          next: () => {
+            this.cargarUsuarios();
+            this.mostrarFormulario = false;
+            alert('Usuario creado exitosamente');
+          },
+          error: (error) => {
+            console.error('Error al crear usuario:', error);
+            alert(`Error al crear usuario: ${error.error?.message || error.message || 'Error desconocido'}`);
+          }
         });
     }
   }

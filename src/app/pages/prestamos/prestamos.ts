@@ -6,9 +6,10 @@ import { PrestamoService } from '@/core/services/prestamo.service';
 import { ClienteService } from '@/core/services/cliente.service';
 import { EquipoService } from '@/core/services/equipo.service';
 import { EspecialistasService } from '@/pages/especialistas/especialistas.service';
-import { Prestamo } from '@/core/models/inventario.model';
+import { Prestamo, Mcodigo } from '@/core/models/inventario.model';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { McodigosService } from '@/core/services/mcodigos.service';
 
 @Component({
     selector: 'app-prestamos',
@@ -51,7 +52,7 @@ import { catchError, map } from 'rxjs/operators';
                                 <td class="px-4 py-3">{{ prestamo.fechaPrevista | date:'shortDate' }}</td>
                                 <td class="px-4 py-3">{{ prestamo.fechaDevolucion | date:'shortDate' }}</td>
                                 <td class="px-4 py-3">{{ prestamo.costoTotal | currency:'USD' }}</td>
-                                <td class="px-4 py-3">{{ prestamo.estadoPrestamo }}</td>
+                                <td class="px-4 py-3">{{ getEstadoPrestamoNombre(prestamo) }}</td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex gap-2 justify-center">
                                         <button (click)="verDetalle(prestamo)" class="text-blue-500 hover:text-blue-700" title="Ver detalles">
@@ -157,7 +158,10 @@ import { catchError, map } from 'rxjs/operators';
                             </div>
                             <div>
                                 <label class="block mb-1">Estado Préstamo</label>
-                                <input type="text" class="input input-bordered w-full" [(ngModel)]="nuevoPrestamo.estadoPrestamo" name="estadoPrestamo" required>
+                                <select class="select select-bordered w-full" [(ngModel)]="nuevoPrestamo.estadoPrestamoId" name="estadoPrestamoId" required>
+                                    <option [ngValue]="null" disabled>Seleccione estado</option>
+                                    <option *ngFor="let e of estadosPrestamo" [ngValue]="e.id">{{ e.nombre }}</option>
+                                </select>
                             </div>
                             <!-- Puedes agregar aquí los campos extra si los agregas al modelo -->
                         </div>
@@ -224,7 +228,10 @@ import { catchError, map } from 'rxjs/operators';
                             </div>
                             <div>
                                 <label class="block mb-1">Estado Préstamo</label>
-                                <input type="text" class="input input-bordered w-full" [(ngModel)]="editarPrestamoData.estadoPrestamo" name="editEstadoPrestamo" required>
+                                <select class="select select-bordered w-full" [(ngModel)]="editarPrestamoData.estadoPrestamoId" name="editEstadoPrestamoId" required>
+                                    <option [ngValue]="null" disabled>Seleccione estado</option>
+                                    <option *ngFor="let e of estadosPrestamo" [ngValue]="e.id">{{ e.nombre }}</option>
+                                </select>
                             </div>
                         </div>
                         <div class="flex justify-end gap-2 mt-6">
@@ -239,6 +246,11 @@ import { catchError, map } from 'rxjs/operators';
 })
 export class Prestamos implements OnInit {
     prestamos: Prestamo[] = [];
+    // Estados (mcodigos grupo PRESTAMO)
+    estadosPrestamo: Mcodigo[] = [];
+    estadoPrestamoNombreById: Record<number, string> = {};
+    estadoPrestamoCodigoById: Record<number, string> = {};
+    estadoPrestamoNombreByCodigo: Record<string, string> = {};
     clienteMap: Record<number, string> = {};
     equipoMap: Record<number, string> = {};
     especialistaMap: Record<number, string> = {};
@@ -291,7 +303,8 @@ export class Prestamos implements OnInit {
         private readonly prestamoService: PrestamoService,
         private readonly clienteService: ClienteService,
         private readonly equipoService: EquipoService,
-        private readonly especialistasService: EspecialistasService
+        private readonly especialistasService: EspecialistasService,
+        private readonly mcodigosService: McodigosService
     ) {}
 
     ngOnInit(): void {
@@ -308,6 +321,26 @@ export class Prestamos implements OnInit {
     }
 
     private loadLookupsAndData(): void {
+        // Cargar estados de préstamo desde mcodigos (grupo PRESTAMO)
+        this.mcodigosService.listar('PRESTAMO').subscribe({
+            next: (list) => {
+                this.estadosPrestamo = list || [];
+                this.estadoPrestamoNombreById = {};
+                this.estadoPrestamoCodigoById = {};
+                this.estadoPrestamoNombreByCodigo = {};
+                (this.estadosPrestamo || []).forEach((e) => {
+                    if (e.id != null) {
+                        this.estadoPrestamoNombreById[Number(e.id)] = e.nombre;
+                        this.estadoPrestamoCodigoById[Number(e.id)] = e.codigo;
+                    }
+                    if (e.codigo) this.estadoPrestamoNombreByCodigo[String(e.codigo)] = e.nombre;
+                });
+            },
+            error: () => {
+                this.estadosPrestamo = [];
+            }
+        });
+
         // Cargar lookups básicos (clientes, equipos, especialistas) para mapear ids a nombres
         // Cargamos de forma paralela pero tolerante: si algún servicio falla, seguimos con lo demás
         this.clienteService.getClientes(1, 1000).subscribe({
@@ -626,7 +659,7 @@ export class Prestamos implements OnInit {
             especialista = { idEspecialista: Number.isFinite(idVal) ? idVal : 0, nombre: '' };
         }
 
-        return {
+        const normalized: Prestamo = {
             idPrestamo: idPrestamo,
             fechaPrestamo: r.fechaPrestamo ?? r.fecha_prestamo ?? r.fecha ?? r.fechaPrestamo ?? null,
             fechaEntrega: r.fechaEntrega ?? r.fecha_entrega ?? r.fechaEntrega ?? null,
@@ -634,10 +667,21 @@ export class Prestamos implements OnInit {
             fechaPrevista: r.fechaPrevista ?? r.fecha_prevista ?? null,
             costoTotal: r.costoTotal ?? r.costo_total ?? 0,
             estadoPrestamo: r.estadoPrestamo ?? r.estado ?? r.status ?? null,
+            estadoPrestamoId: r.estadoPrestamoId ?? r.estadoId ?? r.idEstadoPrestamo ?? r.estado_prestamo_id ?? r.estado_id ?? null,
             cliente: cliente as any,
             equipo: equipo as any,
             especialista: especialista as any
         } as Prestamo;
+
+        // Si viene sólo el código string y podemos mapear a id, hacerlo
+        if (!normalized.estadoPrestamoId && normalized.estadoPrestamo) {
+            const code = this.normalizeToCodigo(normalized.estadoPrestamo);
+            // buscar por codigo en estadosPrestamo si ya cargó, o por nombre
+            const byCodigo = (this.estadosPrestamo || []).find((e) => e.codigo === code);
+            if (byCodigo?.id != null) normalized.estadoPrestamoId = Number(byCodigo.id);
+        }
+
+        return normalized;
     }
 
     /**
@@ -737,7 +781,8 @@ export class Prestamos implements OnInit {
             fechaDevolucion: '',
             fechaPrevista: '',
             costoTotal: 0,
-            estadoPrestamo: 'ACTIVO'
+            estadoPrestamo: 'ACTIVO',
+            estadoPrestamoId: (this.estadosPrestamo.find(e => e.codigo === 'ACTIVO')?.id) ?? null
         };
     }
     cerrarModalNuevo() {
@@ -769,7 +814,8 @@ export class Prestamos implements OnInit {
             fechaDevolucion: '',
             fechaPrevista: '',
             costoTotal: 0,
-            estadoPrestamo: 'ACTIVO'
+            estadoPrestamo: 'ACTIVO',
+            estadoPrestamoId: (this.estadosPrestamo.find(e => e.codigo === 'ACTIVO')?.id) ?? null
         };
     }
 
@@ -827,6 +873,8 @@ export class Prestamos implements OnInit {
                 return;
             }
         // Construir un payload estricto y convertir tipos (evita enviar labels como "Disponible")
+        const estadoId = this.nuevoPrestamo.estadoPrestamoId != null ? Number(this.nuevoPrestamo.estadoPrestamoId) : null;
+        const estadoCodigo = estadoId != null ? this.estadoPrestamoCodigoById[estadoId] : this.normalizeToCodigo(this.nuevoPrestamo.estadoPrestamo as any);
         const payload: any = {
             // Si no se especifica, usar hoy como fecha de préstamo
             fechaPrestamo: this.nuevoPrestamo.fechaPrestamo ? new Date(this.nuevoPrestamo.fechaPrestamo).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -834,8 +882,9 @@ export class Prestamos implements OnInit {
             fechaDevolucion: this.nuevoPrestamo.fechaDevolucion ? new Date(this.nuevoPrestamo.fechaDevolucion).toISOString().split('T')[0] : null,
             fechaPrevista: this.nuevoPrestamo.fechaPrevista ? new Date(this.nuevoPrestamo.fechaPrevista).toISOString().split('T')[0] : null,
             costoTotal: this.nuevoPrestamo.costoTotal != null ? Number(this.nuevoPrestamo.costoTotal) : 0,
-            // Normalizamos estado a un código en mayúsculas (p.ej. 'Disponible' -> 'DISPONIBLE')
-            estadoPrestamo: this.normalizeToCodigo(this.nuevoPrestamo.estadoPrestamo as any),
+            // Enviar id preferentemente y el código como respaldo
+            estadoPrestamoId: estadoId,
+            estadoPrestamo: estadoCodigo ?? null,
             cliente: { idCliente: Number(this.nuevoPrestamo.cliente!.idCliente) },
             equipo: { idEquipo: Number(this.nuevoPrestamo.equipo!.idEquipo) },
             especialista: { idEspecialista: Number(this.nuevoPrestamo.especialista!.idEspecialista) },
@@ -847,7 +896,10 @@ export class Prestamos implements OnInit {
             idCliente: Number(this.nuevoPrestamo.cliente!.idCliente),
             idEquipo: Number(this.nuevoPrestamo.equipo!.idEquipo),
             idEspecialista: Number(this.nuevoPrestamo.especialista!.idEspecialista),
-            estado: this.normalizeToCodigo(this.nuevoPrestamo.estadoPrestamo as any)
+            // backups de estado
+            estado: estadoCodigo ?? null,
+            idEstadoPrestamo: estadoId,
+            estado_prestamo_id: estadoId
         };
     const payloadLimpio = this.limpiarPayloadPrestamo(payload);
     // DEBUG: mostrar payload enviado para diagnóstico (remover después de verificar)
@@ -886,6 +938,12 @@ export class Prestamos implements OnInit {
             fechaDevolucion: this.toDatetimeLocal(prestamo.fechaDevolucion),
             fechaPrevista: this.toDatetimeLocal(prestamo.fechaPrevista)
         } as any;
+        // Preseleccionar estadoPrestamoId si sólo vino el código
+        if (!this.editarPrestamoData.estadoPrestamoId && this.editarPrestamoData.estadoPrestamo) {
+            const code = this.normalizeToCodigo(this.editarPrestamoData.estadoPrestamo);
+            const found = (this.estadosPrestamo || []).find(e => e.codigo === code);
+            if (found?.id != null) this.editarPrestamoData.estadoPrestamoId = Number(found.id);
+        }
         this.modalEditar = true;
     }
     cerrarModalEditar() {
@@ -902,13 +960,16 @@ export class Prestamos implements OnInit {
         const cId = Number(this.editarPrestamoData.cliente!.idCliente);
         const eId = Number(this.editarPrestamoData.equipo!.idEquipo);
         const sId = Number(this.editarPrestamoData.especialista!.idEspecialista);
+        const estadoId = this.editarPrestamoData.estadoPrestamoId != null ? Number(this.editarPrestamoData.estadoPrestamoId) : null;
+        const estadoCodigo = estadoId != null ? this.estadoPrestamoCodigoById[estadoId] : this.normalizeToCodigo(this.editarPrestamoData.estadoPrestamo as any);
         const payload: any = {
             fechaPrestamo: this.editarPrestamoData.fechaPrestamo ? new Date(this.editarPrestamoData.fechaPrestamo).toISOString().split('T')[0] : null,
             fechaEntrega: this.editarPrestamoData.fechaEntrega ? new Date(this.editarPrestamoData.fechaEntrega).toISOString().split('T')[0] : null,
             fechaDevolucion: this.editarPrestamoData.fechaDevolucion ? new Date(this.editarPrestamoData.fechaDevolucion).toISOString().split('T')[0] : null,
             fechaPrevista: this.editarPrestamoData.fechaPrevista ? new Date(this.editarPrestamoData.fechaPrevista).toISOString().split('T')[0] : null,
             costoTotal: (this.editarPrestamoData.costoTotal !== undefined && this.editarPrestamoData.costoTotal !== null) ? Number(this.editarPrestamoData.costoTotal) : 0,
-            estadoPrestamo: this.normalizeToCodigo(this.editarPrestamoData.estadoPrestamo as any),
+            estadoPrestamoId: estadoId,
+            estadoPrestamo: estadoCodigo ?? null,
             cliente: { idCliente: Number(this.editarPrestamoData.cliente?.idCliente ?? 0) },
             equipo: { idEquipo: Number(this.editarPrestamoData.equipo?.idEquipo ?? 0) },
             especialista: { idEspecialista: Number(this.editarPrestamoData.especialista?.idEspecialista ?? 0) },
@@ -919,7 +980,9 @@ export class Prestamos implements OnInit {
             idCliente: Number(this.editarPrestamoData.cliente?.idCliente ?? 0),
             idEquipo: Number(this.editarPrestamoData.equipo?.idEquipo ?? 0),
             idEspecialista: Number(this.editarPrestamoData.especialista?.idEspecialista ?? 0),
-            estado: this.normalizeToCodigo(this.editarPrestamoData.estadoPrestamo as any)
+            estado: estadoCodigo ?? null,
+            idEstadoPrestamo: estadoId,
+            estado_prestamo_id: estadoId
         };
     const payloadLimpio = this.limpiarPayloadPrestamo(payload);
     // DEBUG: mostrar payload de edición para diagnóstico (remover después de verificar)
@@ -1010,14 +1073,31 @@ export class Prestamos implements OnInit {
 
     eliminarPrestamo(id: number) {
         if (confirm('¿Está seguro de eliminar este préstamo?')) {
+            console.log('[DEBUG] Eliminando préstamo con ID:', id);
             this.prestamoService.eliminarPrestamo(id).subscribe({
-                next: () => {
+                next: (response) => {
+                    console.log('[DEBUG] Préstamo eliminado exitosamente:', response);
+                    alert('Préstamo eliminado exitosamente');
                     this.cargarPrestamos();
                 },
-                error: () => {
-                    alert('Error al eliminar el préstamo');
+                error: (err: any) => {
+                    console.error('[ERROR] Error al eliminar préstamo:', err);
+                    const errorMsg = err?.message || err?.error?.message || err?.original?.message || 'Error desconocido al eliminar el préstamo';
+                    alert(`Error al eliminar el préstamo: ${errorMsg}`);
                 }
             });
         }
+    }
+
+    // Presentación: nombre de estado desde id o código
+    getEstadoPrestamoNombre(p: Prestamo): string {
+        if (p?.estadoPrestamoId != null && this.estadoPrestamoNombreById[p.estadoPrestamoId]) {
+            return this.estadoPrestamoNombreById[p.estadoPrestamoId];
+        }
+        if (p?.estadoPrestamo) {
+            const code = this.normalizeToCodigo(p.estadoPrestamo as any) || '';
+            return (code && this.estadoPrestamoNombreByCodigo[code]) ? this.estadoPrestamoNombreByCodigo[code] : p.estadoPrestamo;
+        }
+        return '-';
     }
 }

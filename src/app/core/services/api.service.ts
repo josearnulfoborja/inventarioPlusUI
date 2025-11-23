@@ -72,8 +72,20 @@ export class ApiService {
         const url = this.buildUrl(endpoint);
         const httpOptions = this.buildHttpOptions(options);
 
-        return this.http.post<ApiResponse<T>>(url, body, httpOptions).pipe(
+        return this.http.post(url, body, { ...httpOptions, responseType: 'text' }).pipe(
             timeout(this.timeout),
+            map(response => {
+                try {
+                    const parsed = JSON.parse(response);
+                    return parsed as ApiResponse<T>;
+                } catch {
+                    return {
+                        success: true,
+                        message: response || 'Operación exitosa',
+                        data: null as any
+                    } as ApiResponse<T>;
+                }
+            }),
             catchError(this.handleError)
         );
     }
@@ -88,8 +100,20 @@ export class ApiService {
         const url = this.buildUrl(endpoint);
         const httpOptions = this.buildHttpOptions(options);
 
-        return this.http.put<ApiResponse<T>>(url, body, httpOptions).pipe(
+        return this.http.put(url, body, { ...httpOptions, responseType: 'text' }).pipe(
             timeout(this.timeout),
+            map(response => {
+                try {
+                    const parsed = JSON.parse(response);
+                    return parsed as ApiResponse<T>;
+                } catch {
+                    return {
+                        success: true,
+                        message: response || 'Operación exitosa',
+                        data: null as any
+                    } as ApiResponse<T>;
+                }
+            }),
             catchError(this.handleError)
         );
     }
@@ -104,8 +128,20 @@ export class ApiService {
         const url = this.buildUrl(endpoint);
         const httpOptions = this.buildHttpOptions(options);
 
-        return this.http.patch<ApiResponse<T>>(url, body, httpOptions).pipe(
+        return this.http.patch(url, body, { ...httpOptions, responseType: 'text' }).pipe(
             timeout(this.timeout),
+            map(response => {
+                try {
+                    const parsed = JSON.parse(response);
+                    return parsed as ApiResponse<T>;
+                } catch {
+                    return {
+                        success: true,
+                        message: response || 'Operación exitosa',
+                        data: null as any
+                    } as ApiResponse<T>;
+                }
+            }),
             catchError(this.handleError)
         );
     }
@@ -119,8 +155,23 @@ export class ApiService {
         const url = this.buildUrl(endpoint);
         const httpOptions = this.buildHttpOptions(options);
 
-        return this.http.delete<ApiResponse<T>>(url, httpOptions).pipe(
+        // Usar responseType: 'text' para manejar respuestas de texto plano del backend
+        return this.http.delete(url, { ...httpOptions, responseType: 'text' }).pipe(
             timeout(this.timeout),
+            map(response => {
+                // Intentar parsear como JSON, si falla, crear respuesta exitosa con el texto
+                try {
+                    const parsed = JSON.parse(response);
+                    return parsed as ApiResponse<T>;
+                } catch {
+                    // Si no es JSON, crear una respuesta ApiResponse estándar
+                    return {
+                        success: true,
+                        message: response || 'Eliminado exitosamente',
+                        data: null as any
+                    } as ApiResponse<T>;
+                }
+            }),
             catchError(this.handleError)
         );
     }

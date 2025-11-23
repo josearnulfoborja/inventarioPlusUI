@@ -18,8 +18,8 @@
         <tr *ngFor="let esp of especialistas" class="border-b hover:bg-gray-50">
           <td class="px-4 py-2">{{ esp.nombre }}</td>
           <td class="px-4 py-2">
-            <span [class]="esp.disponibilidad ? 'text-green-600' : 'text-gray-500'">
-              {{ esp.disponibilidad ? 'Disponible' : 'No disponible' }}
+            <span [class]="esp.disponibilidad === 'Disponible' ? 'text-green-600' : 'text-gray-500'">
+              {{ esp.disponibilidad }}
             </span>
           </td>
           <td class="px-4 py-2 text-center">
@@ -46,7 +46,7 @@
           </select>
         </div>
         <div class="flex gap-2">
-          <button type="submit" class="btn btn-primary" [disabled]="especialistaForm.invalid">
+          <button type="submit" class="btn btn-primary">
             {{ editMode ? 'Actualizar' : 'Agregar' }} Especialista
           </button>
           <button type="button" class="btn btn-secondary" (click)="cancelarEdicion(); mostrarFormulario = false">Cancelar</button>
