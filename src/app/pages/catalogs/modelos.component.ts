@@ -35,8 +35,9 @@ import { forkJoin } from 'rxjs';
             <tbody class="bg-white divide-y divide-gray-200">
               <tr *ngFor="let s of modelos">
                 <td class="px-6 py-4 whitespace-normal text-sm text-gray-700">{{ getMarcaName(s) }}</td>
-                  <td class="px-6 py-4 whitespace-normal text-sm text-gray-700">{{ s.nombre }}</td>
-                  <td class="px-6 py-4 whitespace-normal text-sm text-gray-600">{{ getMarcaDescription(s) }}</td>
+                <td class="px-6 py-4 whitespace-normal text-sm text-gray-700">{{ s.nombre }}</td>
+                <td class="px-6 py-4 whitespace-normal text-sm text-gray-700">{{ s.descripcion }}</td>
+                <td class="px-6 py-4 whitespace-normal text-sm text-gray-600">{{ getMarcaDescription(s) }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ s.activo ? 'Sí' : 'No' }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                   <button class="text-blue-600 hover:underline mr-4" (click)="editar(s)">Editar</button>
@@ -49,6 +50,8 @@ import { forkJoin } from 'rxjs';
           <div *ngIf="!cargando && modelos.length === 0" class="p-6 text-sm text-gray-600">No hay modelos registrados.</div>
           <div *ngIf="cargando" class="p-6 text-sm text-gray-500">Cargando...</div>
         </div>
+
+       
 
         <div *ngIf="mostrarFormulario" class="mt-4 bg-white p-4 rounded-md border border-gray-100">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
