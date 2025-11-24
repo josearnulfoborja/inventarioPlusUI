@@ -35,8 +35,9 @@ import { forkJoin } from 'rxjs';
             <tbody class="bg-white divide-y divide-gray-200">
               <tr *ngFor="let s of modelos">
                 <td class="px-6 py-4 whitespace-normal text-sm text-gray-700">{{ getMarcaName(s) }}</td>
-                  <td class="px-6 py-4 whitespace-normal text-sm text-gray-700">{{ s.nombre }}</td>
-                  <td class="px-6 py-4 whitespace-normal text-sm text-gray-600">{{ getMarcaDescription(s) }}</td>
+                <td class="px-6 py-4 whitespace-normal text-sm text-gray-700">{{ s.nombre }}</td>
+                <td class="px-6 py-4 whitespace-normal text-sm text-gray-700">{{ s.descripcion }}</td>
+                <td class="px-6 py-4 whitespace-normal text-sm text-gray-600">{{ getMarcaDescription(s) }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ s.activo ? 'Sí' : 'No' }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                   <button class="text-blue-600 hover:underline mr-4" (click)="editar(s)">Editar</button>
@@ -50,9 +51,11 @@ import { forkJoin } from 'rxjs';
           <div *ngIf="cargando" class="p-6 text-sm text-gray-500">Cargando...</div>
         </div>
 
+       
+
         <div *ngIf="mostrarFormulario" class="mt-4 bg-white p-4 rounded-md border border-gray-100">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <select [(ngModel)]="form.marcaId" class="input">
+            <select [(ngModel)]="form.marca" class="input">
               <option [ngValue]="undefined">-- Seleccionar marca --</option>
               <option *ngFor="let m of marcas" [ngValue]="m.id">{{ m.nombre }}</option>
             </select>
@@ -78,7 +81,7 @@ export class ModelosComponent implements OnInit {
   cargando = false;
   error: string | null = null;
   mostrarFormulario = false;
-  form: Partial<Modelo> = { nombre: '', marcaId: undefined, codigo: '', descripcion: '', activo: true };
+  form: Partial<Modelo> = { nombre: '', marca: '', codigo: '', descripcion: '', activo: true };
   editingId?: number;
   marcasMap: Record<number, { nombre: string; descripcion?: string }> = {};
   marcas: any[] = [];
@@ -162,19 +165,10 @@ export class ModelosComponent implements OnInit {
 
       return '-';
     }
-    nuevo() { this.form = { nombre: '', marcaId: undefined, codigo: '', descripcion: '', activo: true }; this.editingId = undefined; this.mostrarFormulario = true; }
+    nuevo() { this.form = { nombre: '', marca: '', codigo: '', descripcion: '', activo: true }; this.editingId = undefined; this.mostrarFormulario = true; }
     editar(m: Modelo) { this.form = { ...m }; this.editingId = m.id; this.mostrarFormulario = true; }
     guardar() {
-      const now = new Date().toISOString();
-      const payload = { 
-        nombre: this.form.nombre, 
-        marcaId: this.form.marcaId, 
-        codigo: this.form.codigo, 
-        descripcion: this.form.descripcion, 
-        activo: !!this.form.activo,
-        createdAt: this.form.createdAt || now,
-        updatedAt: now
-      } as Modelo;
+      const payload = { nombre: this.form.nombre, marca: this.form.marca, codigo: this.form.codigo, descripcion: this.form.descripcion, activo: !!this.form.activo } as Modelo;
       if (this.editingId) {
         this.service.actualizar(this.editingId, payload).subscribe({ next: () => { this.mostrarFormulario = false; this.load(); }, error: () => alert('Error al actualizar') });
       } else {
@@ -188,3 +182,4 @@ export class ModelosComponent implements OnInit {
   }
     cancelar() { this.mostrarFormulario = false; }
 }
+ 

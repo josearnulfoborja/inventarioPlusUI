@@ -22,7 +22,20 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 
 // Asignar vfs a la instancia de pdfMake
-(pdfMake as any).vfs = (pdfFonts as any).pdfMake.vfs;
+(function assignPdfVfs() {
+    try {
+        // pdfFonts export shape can vary; try common locations
+        const maybeVfs = (pdfFonts as any)?.pdfMake?.vfs || (pdfFonts as any)?.vfs || (pdfFonts as any);
+        if (maybeVfs) {
+            (pdfMake as any).vfs = maybeVfs;
+        } else {
+            // If we can't find vfs, leave as-is and let pdfMake throw a clearer error later
+            console.warn('pdfMake vfs not found on pdfFonts import, pdf generation may fail.');
+        }
+    } catch (e) {
+        console.error('Error assigning pdfMake vfs:', e);
+    }
+})();
 
 type Column = { field: string; header: string };
 
@@ -263,12 +276,26 @@ export class Reportes implements OnInit {
     }
 
     viewPDF() {
-        const docDef = this.buildPdfDefinition();
-        (pdfMake as any).createPdf(docDef).getBlob((blob: Blob) => {
-            const url = URL.createObjectURL(blob);
-            this.pdfSrc = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-            this.showPdf = true;
-        });
+        try {
+            const docDef = this.buildPdfDefinition();
+            const creator = (pdfMake as any).createPdf;
+            if (typeof creator !== 'function') {
+                throw new Error('pdfMake.createPdf is not available.');
+            }
+            creator.call(pdfMake, docDef).getBlob((blob: Blob) => {
+                try {
+                    const url = URL.createObjectURL(blob);
+                    this.pdfSrc = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+                    this.showPdf = true;
+                } catch (inner) {
+                    console.error('Error creating object URL for PDF blob:', inner);
+                    alert('Error al generar vista previa PDF. Revisa la consola para más detalles.');
+                }
+            });
+        } catch (e: any) {
+            console.error('Error generating PDF:', e);
+            alert('Error al generar PDF: ' + (e?.message || e));
+        }
     }
 
     private currentExportData() {

@@ -28,10 +28,10 @@ import { Router } from '@angular/router';
                 <div class="w-full lg:w-5/12 h-screen text-center flex justify-center items-start">
                     <div class="z-50 w-full lg:w-8/12 px-12 text-center mt-20" style="max-width: 400px">
                         <div class="w-full flex items-center justify-center">
-                            <img src="/layout/images/pages/login/icon-login.svg" alt="avalon-layout" class="w-24" />
+                            <img src="/layout/images/pages/login/icon-login.svg" alt="inventario-plus-layout" class="w-24" />
                         </div>
-                        <div class="text-4xl font-light my-6 text-primary-500">Sign in to Avalon</div>
-                        <p>Welcome, please use the form to sign-in Avalon network</p>
+                        <div class="text-4xl font-light my-6 text-primary-500">Sign in to Inventario Plus</div>
+                        <p>Welcome, please use the form to sign-in to the Inventario Plus network</p>
                         <div class="mt-8 text-left">
                             <label for="username" class="block mb-2 text-surface-600 dark:text-surface-400">Username</label>
                             <p-iconfield class="block">

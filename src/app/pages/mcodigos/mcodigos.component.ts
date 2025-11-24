@@ -43,7 +43,20 @@ export class McodigosComponent implements OnInit {
         // eslint-disable-next-line no-console
         console.debug('[mcodigos] respuesta grupo', this.filtroGrupo, 'conteo:', (list || []).length);
         this.mcodigosOriginal = list || [];
-        this.filtrarLocal();
+          this.filtrarLocal();
+
+          // Si la API devolvió registros pero ninguno coincide con el grupo seleccionado,
+          // actualizar el filtro al primer grupo disponible para mostrar datos inmediatamente.
+          if ((this.mcodigos || []).length === 0 && (this.mcodigosOriginal || []).length > 0) {
+            const firstGroup = (this.mcodigosOriginal[0].grupo || '').toUpperCase();
+            const current = (this.filtroGrupo || '').toUpperCase();
+            if (firstGroup && firstGroup !== current) {
+              // eslint-disable-next-line no-console
+              console.debug('[mcodigos] grupo seleccionado no tiene registros; cambiando a', firstGroup);
+              this.filtroGrupo = firstGroup;
+              this.filtrarLocal();
+            }
+          }
         this.cargando = false;
       },
       error: err => {
