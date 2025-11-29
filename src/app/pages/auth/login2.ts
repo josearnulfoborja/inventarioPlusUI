@@ -35,13 +35,13 @@ import { Router } from '@angular/router';
                         <div class="mt-8 text-left">
                             <label for="username" class="block mb-2 text-surface-600 dark:text-surface-400">Username</label>
                             <p-iconfield class="block">
-                                <input id="username" type="text" pInputText class="w-full" [(ngModel)]="username" />
+                                <input id="username" type="text" pInputText class="w-full" [(ngModel)]="username" (keydown.enter)="submit()" />
                                 <p-inputicon class="pi pi-user" />
                             </p-iconfield>
 
                             <label for="password" class="block mb-2 mt-4 text-surface-600 dark:text-surface-400">Password</label>
                             <p-iconfield class="block">
-                                <input id="password" type="password" pInputText class="w-full" [(ngModel)]="password" />
+                                <input id="password" type="password" pInputText class="w-full" [(ngModel)]="password" (keydown.enter)="submit()" />
                                 <p-inputicon class="pi pi-lock" />
                             </p-iconfield>
 
