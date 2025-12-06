@@ -23,7 +23,11 @@ INSERT INTO mcodigos (grupo,codigo,nombre,descripcion,orden,activo) VALUES
 ('PRESTAMO','DEVUELTO','Devuelto','Préstamo devuelto',20,1),
 ('PRESTAMO','VENCIDO','Vencido','Préstamo vencido',30,1),
 ('PRESTAMO','ANULADO','Anulado','Préstamo anulado',40,1),
-('MARCA','BOSCH','Bosch','Marca Bosch',10,1),
-('MARCA','DEWALT','DeWalt','Marca DeWalt',20,1);
+('MARCA','ACTIVA','Activa','Marca activa y disponible',10,1),
+('MARCA','INACTIVA','Inactiva','Marca temporalmente inactiva',20,1),
+('MARCA','EN_REVISION','En Revisión','Marca en proceso de revisión',30,1),
+('INSPECCION','PENDIENTE','Pendiente','Inspección pendiente de realizar',10,1),
+('INSPECCION','APROBADO','Aprobado','Inspección aprobada',20,1),
+('INSPECCION','RECHAZADO','Rechazado','Inspección rechazada',30,1);
 
 -- Nota: si usas PostgreSQL, cambia AUTO_INCREMENT por BIGSERIAL y los tipos booleanos según corresponda.

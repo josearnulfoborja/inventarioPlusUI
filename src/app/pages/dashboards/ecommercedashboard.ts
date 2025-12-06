@@ -23,6 +23,7 @@ import { MarcaService } from '@/core/services/marca.service';
 import { ModeloService } from '@/core/services/modelo.service';
 import { TipoEquipoService } from '@/core/services/tipo-equipo.service';
 import { UbicacionService } from '@/core/services/ubicacion.service';
+import { ReporteService } from '@/core/services/reporte.service';
 
 @Component({
     selector: 'app-ecommerce-dashboard',
@@ -30,7 +31,7 @@ import { UbicacionService } from '@/core/services/ubicacion.service';
     template: `
         <div class="grid grid-cols-12 gap-8">
             <!-- Tarjetas de estadísticas principales -->
-            <div class="col-span-12 md:col-span-6 lg:col-span-3">
+            <div class="col-span-12 md:col-span-6 lg:col-span-4">
                 <div class="p-4 text-white h-24 rounded-border m-0 bg-center bg-cover bg-no-repeat bg-cyan-400" style="background-image: url('/demo/images/dashboard/effect-1.svg')">
                     <div class="font-bold w-full mb-2">
                         <span>Clientes</span>
@@ -38,7 +39,7 @@ import { UbicacionService } from '@/core/services/ubicacion.service';
                     <div class="text-white text-2xl font-bold w-full flex items-center py-1">{{ stats.clientes }}</div>
                 </div>
             </div>
-            <div class="col-span-12 md:col-span-6 lg:col-span-3">
+            <div class="col-span-12 md:col-span-6 lg:col-span-4">
                 <div class="p-4 text-white h-24 rounded-border m-0 bg-center bg-cover bg-no-repeat bg-orange-400" style="background-image: url('/demo/images/dashboard/effect-2.svg')">
                     <div class="font-bold w-full mb-2">
                         <span>Equipos</span>
@@ -46,27 +47,12 @@ import { UbicacionService } from '@/core/services/ubicacion.service';
                     <div class="text-white text-2xl font-bold w-full flex items-center py-1">{{ stats.equipos }}</div>
                 </div>
             </div>
-            <div class="col-span-12 md:col-span-6 lg:col-span-3">
-                <div class="p-4 text-white h-24 rounded-border m-0 bg-center bg-cover bg-no-repeat bg-purple-400" style="background-image: url('/demo/images/dashboard/effect-3.svg')">
-                    <div class="font-bold w-full mb-2">
-                        <span>Préstamos Activos</span>
-                    </div>
-                    <div class="text-white text-2xl font-bold w-full flex items-center py-1">{{ stats.prestamosActivos }}</div>
-                </div>
-            </div>
-            <div class="col-span-12 md:col-span-6 lg:col-span-3">
+            <div class="col-span-12 md:col-span-6 lg:col-span-4">
                 <div class="p-4 text-white h-24 rounded-border m-0 bg-center bg-cover bg-no-repeat bg-slate-400" style="background-image: url('/demo/images/dashboard/effect-4.svg')">
                     <div class="font-bold w-full mb-2">
                         <span>Usuarios</span>
                     </div>
                     <div class="text-white text-2xl font-bold w-full flex items-center py-1">{{ stats.usuarios }}</div>
-                </div>
-            </div>
-
-            <div class="col-span-12 lg:col-span-6">
-                <div class="card h-full">
-                    <h5>Weekly Overview</h5>
-                    <p-chart type="line" [data]="chartData" [options]="chartOptions" id="nasdaq-chart" [responsive]="true"></p-chart>
                 </div>
             </div>
 
@@ -115,128 +101,51 @@ import { UbicacionService } from '@/core/services/ubicacion.service';
                 </div>
             </div>
 
-            <div class="col-span-12 lg:col-span-4">
-                <div class="card">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="font-bold text-3xl text-color">{{ stats.equipos }}</span>
-                            <p class="mt-2 mb-0 text-2xl text-muted-color">Equipos Registrados</p>
-                        </div>
-                        <div>
-                            <i class="pi pi-desktop text-6xl text-cyan-500"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-span-12 lg:col-span-4">
-                <div class="card">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="font-bold text-3xl text-color">{{ stats.prestamosActivos }}</span>
-                            <p class="mt-2 mb-0 text-2xl text-muted-color">Préstamos Activos</p>
-                        </div>
-                        <div>
-                            <i class="pi pi-send text-6xl text-orange-500"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-span-12 lg:col-span-4">
-                <div class="card">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="font-bold text-3xl text-color">{{ stats.evaluaciones }}</span>
-                            <p class="mt-2 mb-0 text-2xl text-muted-color">Evaluaciones Realizadas</p>
-                        </div>
-                        <div>
-                            <i class="pi pi-check-circle text-6xl text-green-500"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="col-span-12 xl:col-span-6">
                 <div class="card p-6">
                     <div class="flex items-center justify-between mb-6">
-                        <h5>Product Sales</h5>
-                        <button pButton pRipple icon="pi pi-refresh" rounded outlined></button>
+                        <h5>Equipos por Estado</h5>
+                        <button pButton pRipple icon="pi pi-refresh" rounded outlined (click)="loadStats()"></button>
                     </div>
 
                     <div class="grid grid-cols-12 gap-4 mr-0">
                         <div class="col-span-6 md:col-span-4 lg:col-span-3 p-4">
                             <div class="text-center">
-                                <div class="flex items-center justify-center mb-4 mx-auto bg-surface-0 dark:bg-surface-950 border border-surface rounded-border" style="width: 90px; height: 90px">
-                                    <img src="/demo/images/dashboard/headphone.png" style="width: 48px; height: 48px" />
+                                <div class="flex items-center justify-center mb-4 mx-auto bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-border" style="width: 90px; height: 90px">
+                                    <i class="pi pi-check-circle text-green-500 text-4xl"></i>
                                 </div>
-                                <span class="font-medium text-color">Headphone</span>
-                                <div class="text-sm text-muted-color mt-2">220 Sales</div>
+                                <span class="font-medium text-color">Disponible</span>
+                                <div class="text-sm text-muted-color mt-2">{{ equiposPorEstado.disponible }} Equipos</div>
                             </div>
                         </div>
                         <div class="col-span-6 md:col-span-4 lg:col-span-3 p-4">
                             <div class="text-center">
-                                <div class="flex items-center justify-center mb-4 mx-auto bg-surface-0 dark:bg-surface-950 border border-surface rounded-border" style="width: 90px; height: 90px">
-                                    <img src="/demo/images/dashboard/laptop.png" style="width: 48px; height: 48px" />
+                                <div class="flex items-center justify-center mb-4 mx-auto bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-border" style="width: 90px; height: 90px">
+                                    <i class="pi pi-send text-orange-500 text-4xl"></i>
                                 </div>
-                                <span class="font-medium text-color">Laptop</span>
-                                <div class="text-sm text-muted-color mt-2">110 Sales</div>
+                                <span class="font-medium text-color">Prestado</span>
+                                <div class="text-sm text-muted-color mt-2">{{ equiposPorEstado.prestado }} Equipos</div>
                             </div>
                         </div>
                         <div class="col-span-6 md:col-span-4 lg:col-span-3 p-4">
                             <div class="text-center">
-                                <div class="flex items-center justify-center mb-4 mx-auto bg-surface-0 dark:bg-surface-950 border border-surface rounded-border" style="width: 90px; height: 90px">
-                                    <img src="/demo/images/dashboard/phone.png" style="width: 48px; height: 48px" />
+                                <div class="flex items-center justify-center mb-4 mx-auto bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-border" style="width: 90px; height: 90px">
+                                    <i class="pi pi-wrench text-blue-500 text-4xl"></i>
                                 </div>
-                                <span class="font-medium text-color">Phone</span>
-                                <div class="text-sm text-muted-color mt-2">90 Sales</div>
+                                <span class="font-medium text-color">Mantenimiento</span>
+                                <div class="text-sm text-muted-color mt-2">{{ equiposPorEstado.mantenimiento }} Equipos</div>
                             </div>
                         </div>
                         <div class="col-span-6 md:col-span-4 lg:col-span-3 p-4">
                             <div class="text-center">
-                                <div class="flex items-center justify-center mb-4 mx-auto bg-surface-0 dark:bg-surface-950 border border-surface rounded-border" style="width: 90px; height: 90px">
-                                    <img src="/demo/images/dashboard/shoes.png" style="width: 48px; height: 48px" />
+                                <div class="flex items-center justify-center mb-4 mx-auto bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-border" style="width: 90px; height: 90px">
+                                    <i class="pi pi-times-circle text-red-500 text-4xl"></i>
                                 </div>
-                                <span class="font-medium text-color">Shoes</span>
-                                <div class="text-sm text-muted-color mt-2">77 Sales</div>
+                                <span class="font-medium text-color">Baja</span>
+                                <div class="text-sm text-muted-color mt-2">{{ equiposPorEstado.baja }} Equipos</div>
                             </div>
                         </div>
-                        <div class="col-span-6 md:col-span-4 lg:col-span-3 p-4">
-                            <div class="text-center">
-                                <div class="flex items-center justify-center mb-4 mx-auto bg-surface-0 dark:bg-surface-950 border border-surface rounded-border" style="width: 90px; height: 90px">
-                                    <img src="/demo/images/dashboard/tshirt.png" style="width: 48px; height: 48px" />
-                                </div>
-                                <span class="font-medium text-color">Tshirt</span>
-                                <div class="text-sm text-muted-color mt-2">454 Sales</div>
-                            </div>
-                        </div>
-                        <div class="col-span-6 md:col-span-4 lg:col-span-3 p-4">
-                            <div class="text-center">
-                                <div class="flex items-center justify-center mb-4 mx-auto bg-surface-0 dark:bg-surface-950 border border-surface rounded-border" style="width: 90px; height: 90px">
-                                    <img src="/demo/images/dashboard/vacuum.png" style="width: 48px; height: 48px" />
-                                </div>
-                                <span class="font-medium text-color">Vacuum</span>
-                                <div class="text-sm text-muted-color mt-2">330 Sales</div>
-                            </div>
-                        </div>
-                        <div class="col-span-6 md:col-span-4 lg:col-span-3 p-4">
-                            <div class="text-center">
-                                <div class="flex items-center justify-center mb-4 mx-auto bg-surface-0 dark:bg-surface-950 border border-surface rounded-border" style="width: 90px; height: 90px">
-                                    <img src="/demo/images/dashboard/wallet.png" style="width: 48px; height: 48px" />
-                                </div>
-                                <span class="font-medium text-color">Wallet</span>
-                                <div class="text-sm text-muted-color mt-2">42 Sales</div>
-                            </div>
-                        </div>
-                        <div class="col-span-6 md:col-span-4 lg:col-span-3 p-4">
-                            <div class="text-center">
-                                <div class="flex items-center justify-center mb-4 mx-auto bg-surface-0 dark:bg-surface-950 border border-surface rounded-border" style="width: 90px; height: 90px">
-                                    <img src="/demo/images/dashboard/watch.png" style="width: 48px; height: 48px" />
-                                </div>
-                                <span class="font-medium text-color">Watch</span>
-                                <div class="text-sm text-muted-color mt-2">112 Sales</div>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
             </div>
@@ -244,48 +153,44 @@ import { UbicacionService } from '@/core/services/ubicacion.service';
             <div class="col-span-12 xl:col-span-6">
                 <div class="card">
                     <div class="flex flex-col md:flex-row md:items-start md:justify-between mb-4">
-                        <div class="text-surface-900 dark:text-surface-0 text-xl font-semibold mb-4 md:mb-0">Recent Sales</div>
+                        <div class="text-surface-900 dark:text-surface-0 text-xl font-semibold mb-4 md:mb-0">Préstamos Recientes</div>
                         <div class="inline-flex items-center">
                             <p-iconfield class="flex-auto">
                                 <p-inputicon class="pi pi-search" />
-                                <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Search" class="w-full" style="border-radius: 2rem" />
+                                <input pInputText type="text" (input)="onGlobalFilterPrestamos(dtPrestamos, $event)" placeholder="Buscar" class="w-full" style="border-radius: 2rem" />
                             </p-iconfield>
-                            <button pButton pRipple icon="pi pi-upload" class="mx-4 export-target-button" rounded (click)="dt.exportCSV()"></button>
+                            <button pButton pRipple icon="pi pi-upload" class="mx-4 export-target-button" rounded (click)="dtPrestamos.exportCSV()"></button>
                         </div>
                     </div>
-                    <p-table #dt [value]="products" [columns]="cols" [paginator]="true" [rows]="6" responsiveLayout="scroll" [globalFilterFields]="['name', 'category', 'inventoryStatus']">
+                    <p-table #dtPrestamos [value]="prestamosRecientes" [columns]="colsPrestamos" [paginator]="true" [rows]="6" responsiveLayout="scroll" [globalFilterFields]="['cliente', 'equipo', 'estado']">
                         <ng-template pTemplate="header">
                             <tr>
-                                <th pSortableColumn="name" style="min-width:12rem" class="white-space-nowrap">
-                                    Name
-                                    <p-sortIcon field="name"></p-sortIcon>
+                                <th pSortableColumn="cliente" style="min-width:12rem" class="white-space-nowrap">
+                                    Cliente
+                                    <p-sortIcon field="cliente"></p-sortIcon>
                                 </th>
-                                <th pSortableColumn="category" style="min-width:10rem" class="white-space-nowrap">
-                                    Category
-                                    <p-sortIcon field="category"></p-sortIcon>
+                                <th pSortableColumn="equipo" style="min-width:10rem" class="white-space-nowrap">
+                                    Equipo
+                                    <p-sortIcon field="equipo"></p-sortIcon>
                                 </th>
-                                <th pSortableColumn="price" style="min-width:10rem" class="white-space-nowrap">
-                                    Price
-                                    <p-sortIcon field="price"></p-sortIcon>
+                                <th pSortableColumn="fechaPrestamo" style="min-width:10rem" class="white-space-nowrap">
+                                    Fecha Préstamo
+                                    <p-sortIcon field="fechaPrestamo"></p-sortIcon>
                                 </th>
-                                <th pSortableColumn="inventoryStatus" style="min-width:10rem" class="white-space-nowrap">
-                                    Status
-                                    <p-sortIcon field="inventoryStatus"></p-sortIcon>
+                                <th pSortableColumn="estado" style="min-width:10rem" class="white-space-nowrap">
+                                    Estado
+                                    <p-sortIcon field="estado"></p-sortIcon>
                                 </th>
                                 <th></th>
                             </tr>
                         </ng-template>
-                        <ng-template pTemplate="body" let-product>
+                        <ng-template pTemplate="body" let-prestamo>
                             <tr>
-                                <td>{{ product.name }}</td>
+                                <td>{{ prestamo.cliente }}</td>
+                                <td>{{ prestamo.equipo }}</td>
+                                <td>{{ prestamo.fechaPrestamo | date: 'dd/MM/yyyy' }}</td>
                                 <td>
-                                    {{ product.category }}
-                                </td>
-                                <td>
-                                    {{ product.price | currency: 'USD' }}
-                                </td>
-                                <td>
-                                    <p-tag [severity]="getBadgeSeverity(product)">{{ product.inventoryStatus }}</p-tag>
+                                    <p-tag [severity]="getPrestamoBadgeSeverity(prestamo.estado)">{{ prestamo.estado }}</p-tag>
                                 </td>
                             </tr>
                         </ng-template>
@@ -304,6 +209,7 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
     chartOptions: any;
 
     layoutService: LayoutService = inject(LayoutService);
+    private reporteService = inject(ReporteService);
     private clienteService = inject(ClienteService);
     private equipoService = inject(EquipoService);
     private usuarioService = inject(UsuarioService);
@@ -317,6 +223,7 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
     items!: MenuItem[];
 
     cols: any[] = [];
+    colsPrestamos: any[] = [];
 
     subscription!: Subscription;
 
@@ -335,6 +242,15 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
         ubicaciones: 0
     };
 
+    equiposPorEstado = {
+        disponible: 0,
+        prestado: 0,
+        mantenimiento: 0,
+        baja: 0
+    };
+
+    prestamosRecientes: any[] = [];
+
     constructor(private productService: ProductService) {
         this.subscription = this.layoutService.configUpdate$.pipe(debounceTime(50)).subscribe((config) => {
             this.chartInit();
@@ -351,8 +267,16 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
             { header: 'Status', field: 'inventoryStatus' }
         ];
 
+        this.colsPrestamos = [
+            { header: 'Cliente', field: 'cliente' },
+            { header: 'Equipo', field: 'equipo' },
+            { header: 'Fecha Préstamo', field: 'fechaPrestamo' },
+            { header: 'Estado', field: 'estado' }
+        ];
+
         this.chartInit();
         this.loadStats();
+        this.loadPrestamosRecientes();
     }
 
     ngOnDestroy() {
@@ -362,7 +286,40 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
     }
 
     loadStats() {
-        // Cargar estadísticas de todos los módulos
+        console.log('🔄 Cargando estadísticas del dashboard...');
+        
+        // Usar el servicio de reportes para obtener todas las estadísticas en una sola llamada
+        this.reporteService.getDashboardStats().subscribe({
+            next: (response) => {
+                if (response.success && response.data) {
+                    console.log('✅ Estadísticas del dashboard recibidas:', response.data);
+                    
+                    const data = response.data;
+                    this.stats.clientes = data.totalClientes || 0;
+                    this.stats.equipos = data.totalEquipos || 0;
+                    this.stats.usuarios = data.clientesActivos || 0;
+                    this.stats.prestamosActivos = data.prestamosActivos || 0;
+                    this.stats.evaluaciones = data.evaluacionesPendientes || 0;
+                    
+                    console.log('📊 Estadísticas actualizadas:', this.stats);
+                    
+                    // Cargar detalles adicionales
+                    this.loadDetallesAdicionales();
+                    this.loadEquiposPorEstado();
+                }
+            },
+            error: (error) => {
+                console.error('⚠️ El endpoint de estadísticas no está disponible, usando método alternativo');
+                console.error('Error:', error);
+                // Fallback: cargar estadísticas individualmente
+                this.loadStatsIndividual();
+            }
+        });
+    }
+
+    loadStatsIndividual() {
+        console.log('🔄 Cargando estadísticas individualmente...');
+        
         forkJoin({
             clientes: this.clienteService.getClientes(1, 1),
             equipos: this.equipoService.getEquipos(1, 1),
@@ -375,6 +332,8 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
             ubicaciones: this.ubicacionService.listar()
         }).subscribe({
             next: (responses) => {
+                console.log('✅ Respuestas recibidas:', responses);
+                
                 this.stats.clientes = responses.clientes.pagination?.totalItems || 0;
                 this.stats.equipos = responses.equipos.pagination?.totalItems || 0;
                 this.stats.usuarios = responses.usuarios.pagination?.totalItems || 0;
@@ -385,19 +344,105 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
                 this.stats.tiposEquipo = Array.isArray(responses.tiposEquipo) ? responses.tiposEquipo.length : 0;
                 this.stats.ubicaciones = Array.isArray(responses.ubicaciones) ? responses.ubicaciones.length : 0;
 
-                // Cargar préstamos activos por separado
+                console.log('📊 Estadísticas actualizadas:', this.stats);
+
+                // Intentar cargar préstamos activos
                 this.prestamoService.getPrestamosActivos().subscribe({
                     next: (response) => {
                         this.stats.prestamosActivos = Array.isArray(response.data) ? response.data.length : 0;
+                        console.log('✅ Préstamos activos:', this.stats.prestamosActivos);
                     },
                     error: (error) => {
-                        console.error('Error al cargar préstamos activos:', error);
+                        console.warn('⚠️ No se pudieron cargar préstamos activos');
                         this.stats.prestamosActivos = 0;
                     }
                 });
+
+                this.loadEquiposPorEstado();
             },
             error: (error) => {
-                console.error('Error al cargar estadísticas:', error);
+                console.error('❌ Error al cargar estadísticas:', error);
+            }
+        });
+    }
+
+    loadDetallesAdicionales() {
+        // Cargar marcas, modelos, tipos y ubicaciones
+        forkJoin({
+            marcas: this.marcaService.listar(),
+            modelos: this.modeloService.listar(),
+            tiposEquipo: this.tipoEquipoService.listar(),
+            ubicaciones: this.ubicacionService.listar(),
+            usuarios: this.usuarioService.getUsuarios(1, 1),
+            evaluaciones: this.evaluacionService.getEvaluaciones(1, 1),
+            prestamos: this.prestamoService.getPrestamos(1, 1)
+        }).subscribe({
+            next: (responses) => {
+                this.stats.marcas = Array.isArray(responses.marcas) ? responses.marcas.length : 0;
+                this.stats.modelos = Array.isArray(responses.modelos) ? responses.modelos.length : 0;
+                this.stats.tiposEquipo = Array.isArray(responses.tiposEquipo) ? responses.tiposEquipo.length : 0;
+                this.stats.ubicaciones = Array.isArray(responses.ubicaciones) ? responses.ubicaciones.length : 0;
+                this.stats.usuarios = responses.usuarios.pagination?.totalItems || 0;
+                this.stats.evaluaciones = responses.evaluaciones.pagination?.totalItems || 0;
+                this.stats.prestamos = responses.prestamos.pagination?.totalItems || 0;
+                
+                console.log('✅ Detalles adicionales cargados:', {
+                    marcas: this.stats.marcas,
+                    modelos: this.stats.modelos,
+                    tipos: this.stats.tiposEquipo,
+                    ubicaciones: this.stats.ubicaciones
+                });
+            },
+            error: (error) => {
+                console.error('⚠️ Error al cargar detalles adicionales:', error);
+            }
+        });
+    }
+
+    loadEquiposPorEstado() {
+        console.log('🔄 Cargando equipos por estado...');
+        
+        forkJoin({
+            disponible: this.equipoService.getEquipos(1, 1, { estado: 'DISPONIBLE' }),
+            prestado: this.equipoService.getEquipos(1, 1, { estado: 'PRESTADO' }),
+            mantenimiento: this.equipoService.getEquipos(1, 1, { estado: 'MANTENIMIENTO' }),
+            baja: this.equipoService.getEquipos(1, 1, { estado: 'BAJA' })
+        }).subscribe({
+            next: (responses) => {
+                this.equiposPorEstado.disponible = responses.disponible.pagination?.totalItems || 0;
+                this.equiposPorEstado.prestado = responses.prestado.pagination?.totalItems || 0;
+                this.equiposPorEstado.mantenimiento = responses.mantenimiento.pagination?.totalItems || 0;
+                this.equiposPorEstado.baja = responses.baja.pagination?.totalItems || 0;
+                
+                console.log('✅ Equipos por estado:', this.equiposPorEstado);
+            },
+            error: (error) => {
+                console.error('❌ Error al cargar equipos por estado:', error);
+            }
+        });
+    }
+
+    loadPrestamosRecientes() {
+        console.log('🔄 Cargando préstamos recientes...');
+        
+        this.prestamoService.getPrestamos(1, 10).subscribe({
+            next: (response) => {
+                console.log('📦 Respuesta préstamos:', response);
+                
+                if (response.success && response.data) {
+                    this.prestamosRecientes = response.data.map((prestamo: any) => ({
+                        id: prestamo.id,
+                        cliente: `${prestamo.cliente?.nombre || ''} ${prestamo.cliente?.apellido || ''}`.trim() || 'Sin cliente',
+                        equipo: prestamo.equipo?.nombre || 'Sin equipo',
+                        fechaPrestamo: prestamo.fechaPrestamo,
+                        estado: prestamo.estado
+                    }));
+                    
+                    console.log('✅ Préstamos recientes cargados:', this.prestamosRecientes.length);
+                }
+            },
+            error: (error) => {
+                console.error('❌ Error al cargar préstamos recientes:', error);
             }
         });
     }
@@ -408,20 +453,20 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
 
         this.items = [
             {
-                label: 'Options',
+                label: 'Opciones',
                 items: [
-                    { label: 'Add New', icon: 'pi pi-fw pi-plus' },
-                    { label: 'Search', icon: 'pi pi-fw pi-search' }
+                    { label: 'Actualizar', icon: 'pi pi-fw pi-refresh', command: () => this.loadStats() },
+                    { label: 'Ver Reportes', icon: 'pi pi-fw pi-chart-bar' }
                 ]
             }
         ];
 
         this.chartData = {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
             datasets: [
                 {
-                    label: 'New',
-                    data: [11, 17, 30, 60, 88, 92],
+                    label: 'Equipos',
+                    data: [10, 15, 18, 22, 25, 30],
                     backgroundColor: 'rgba(13, 202, 240, .2)',
                     borderColor: '#0dcaf0',
                     pointBackgroundColor: '#0dcaf0',
@@ -432,8 +477,8 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
                     tension: 0.4
                 },
                 {
-                    label: 'Completed',
-                    data: [11, 19, 39, 59, 69, 71],
+                    label: 'Préstamos',
+                    data: [8, 12, 20, 35, 45, 50],
                     backgroundColor: 'rgba(253, 126, 20, .2)',
                     borderColor: '#fd7e14',
                     pointBackgroundColor: '#fd7e14',
@@ -444,8 +489,8 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
                     tension: 0.4
                 },
                 {
-                    label: 'Canceled',
-                    data: [11, 17, 21, 30, 47, 83],
+                    label: 'Evaluaciones',
+                    data: [5, 10, 15, 25, 35, 45],
                     backgroundColor: 'rgba(111, 66, 193, .2)',
                     borderColor: '#6f42c1',
                     pointBackgroundColor: '#6f42c1',
@@ -505,6 +550,10 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
 
+    onGlobalFilterPrestamos(table: Table, event: Event) {
+        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+    }
+
     getBadgeSeverity(product: Product) {
         switch (product.inventoryStatus) {
             case 'INSTOCK':
@@ -515,6 +564,25 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
 
             case 'OUTOFSTOCK':
                 return 'danger';
+
+            default:
+                return 'info';
+        }
+    }
+
+    getPrestamoBadgeSeverity(estado: string) {
+        switch (estado) {
+            case 'ACTIVO':
+                return 'success';
+
+            case 'DEVUELTO':
+                return 'info';
+
+            case 'VENCIDO':
+                return 'danger';
+
+            case 'CANCELADO':
+                return 'warn';
 
             default:
                 return 'info';

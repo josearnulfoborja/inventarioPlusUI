@@ -50,30 +50,60 @@ export class AuthService {
                 
                 console.log('User data to store:', userData);
                 
-                // Si no hay userData en la respuesta, crear uno básico desde el JWT
+                // Si no hay userData en la respuesta, obtenerlo del backend después del login
                 if (!userData) {
-                    try {
-                        const payload = this.decodeToken(token);
-                        console.log('JWT payload:', payload);
-                        
-                        if (payload?.sub) {
-                            // Crear objeto de usuario básico con el username del JWT
-                            userData = {
-                                username: payload.sub,
-                                nombre: payload.sub, // Usar username como nombre temporal
-                                rol: 'Usuario' // Rol por defecto
-                            };
-                            console.log('Created basic user data from JWT:', userData);
+                    console.log('⚠️ No user data in login response, will fetch from /api/usuarios/me');
+                    // Hacer una petición adicional para obtener los datos del usuario
+                    this.fetchUserProfile().subscribe({
+                        next: (user) => {
+                            console.log('✅ User profile fetched:', user);
+                            if (user) {
+                                localStorage.setItem(USER_KEY, JSON.stringify(user));
+                            }
+                        },
+                        error: (err) => {
+                            console.error('❌ Error fetching user profile:', err);
+                            // Crear usuario básico como fallback
+                            try {
+                                const payload = this.decodeToken(token!);
+                                console.log('JWT payload:', payload);
+                                
+                                if (payload?.sub) {
+                                    const fallbackUser = {
+                                        username: payload.sub,
+                                        nombre: payload.sub,
+                                        rol: 'Usuario'
+                                    };
+                                    console.log('Created fallback user data:', fallbackUser);
+                                    localStorage.setItem(USER_KEY, JSON.stringify(fallbackUser));
+                                }
+                            } catch (e) {
+                                console.error('Error decoding JWT:', e);
+                            }
                         }
-                    } catch (e) {
-                        console.error('Error decoding JWT:', e);
-                    }
-                }
-                
-                if (userData) {
+                    });
+                } else {
                     localStorage.setItem(USER_KEY, JSON.stringify(userData));
                     console.log('User data saved to localStorage');
                 }
+            })
+        );
+    }
+
+    /**
+     * Fetch user profile from backend after login
+     */
+    private fetchUserProfile(): Observable<any> {
+        const profileUrl = `${environment.apiUrl.replace(/\/$/, '')}/usuarios/me`;
+        return this.http.get<any>(profileUrl).pipe(
+            map(resp => {
+                // El backend puede devolver diferentes estructuras
+                if (resp?.data) return resp.data;
+                return resp;
+            }),
+            catchError(err => {
+                console.error('Error fetching user profile:', err);
+                return of(null);
             })
         );
     }
