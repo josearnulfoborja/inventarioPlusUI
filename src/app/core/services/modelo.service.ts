@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { Modelo } from '@/core/models/inventario.model';
+import { of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ModeloService {
@@ -37,6 +38,23 @@ export class ModeloService {
     }
 
     eliminar(id: number) {
-        return this.api.delete(`${this.base}/${id}`);
+        return this.api.delete(`${this.base}/${id}`).pipe(
+            map((response: any) => {
+                // Si la respuesta ya es un objeto válido, retornarlo
+                if (response && typeof response === 'object') {
+                    return response;
+                }
+                // Si es texto plano (ej: "Modelo eliminado con éxito"), crear respuesta exitosa
+                return { success: true, message: response || 'Eliminado correctamente' };
+            }),
+            catchError((error: any) => {
+                // Si el error es por JSON inválido pero status 200, considerar exitoso
+                if (error?.statusCode === 200 || error?.status === 200) {
+                    console.warn('Eliminación exitosa a pesar del error de parseo');
+                    return of({ success: true, message: 'Eliminado correctamente' });
+                }
+                throw error;
+            })
+        );
     }
 }

@@ -6,16 +6,20 @@ import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
     selector: '[app-menu-profile]',
     standalone: true,
     imports: [CommonModule, TooltipModule, ButtonModule, RouterModule],
     template: `<button (click)="toggleMenu()" pTooltip="Profile" [tooltipDisabled]="isTooltipDisabled()">
-            <img src="/demo/images/avatar/amyelsner.png" alt="avatar" style="width: 32px; height: 32px;" />
+            <img 
+                [src]="getUserAvatar()" 
+                [alt]="getUserName()" 
+                style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" />
             <span class="text-start">
-                <strong>Amy Elsner</strong>
-                <small>Webmaster</small>
+                <strong>{{ getUserName() }}</strong>
+                <small>{{ getUserRole() }}</small>
             </span>
             <i class="layout-menu-profile-toggler pi pi-fw" [ngClass]="{ 'pi-angle-down': menuProfilePosition() === 'start' || isHorizontal(), 'pi-angle-up': menuProfilePosition() === 'end' && !isHorizontal() }"></i>
         </button>
@@ -42,6 +46,7 @@ import { Subscription } from 'rxjs';
 })
 export class AppMenuProfile implements OnDestroy {
     layoutService = inject(LayoutService);
+    authService = inject(AuthService);
 
     renderer = inject(Renderer2);
 
@@ -104,5 +109,43 @@ export class AppMenuProfile implements OnDestroy {
 
     toggleMenu() {
         this.layoutService.onMenuProfileToggle();
+    }
+
+    getUserName(): string {
+        const user = this.authService.getUser();
+        console.log('getUserName - user:', user);
+        console.log('localStorage inventarioplus_user:', localStorage.getItem('inventarioplus_user'));
+        
+        if (!user) return 'Usuario';
+        
+        // Construir nombre completo con nombre y apellido
+        const nombre = user['nombre'] || '';
+        const apellido = user['apellido'] || '';
+        
+        if (nombre && apellido) {
+            return `${nombre} ${apellido}`;
+        }
+        
+        return nombre || apellido || user['username'] || 'Usuario';
+    }
+
+    getUserRole(): string {
+        const user = this.authService.getUser();
+        if (!user) return 'Invitado';
+        
+        // Usar rolNombre del backend
+        return user['rolNombre'] || user['rol'] || user['role'] || 'Usuario';
+    }
+
+    getUserAvatar(): string {
+        const user = this.authService.getUser();
+        
+        // Si hay URL de avatar, usarla
+        if (user?.['avatar'] || user?.['avatarUrl'] || user?.['photoUrl']) {
+            return user['avatar'] || user['avatarUrl'] || user['photoUrl'];
+        }
+        
+        // Fallback: usar avatar por defecto
+        return '/demo/images/avatar/amyelsner.png';
     }
 }

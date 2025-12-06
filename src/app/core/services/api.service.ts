@@ -73,8 +73,20 @@ export class ApiService {
         const url = this.buildUrl(endpoint);
         const httpOptions = this.buildHttpOptions(options);
 
-        return this.http.post<ApiResponse<T>>(url, body, httpOptions).pipe(
+        return this.http.post(url, body, { ...httpOptions, responseType: 'text' }).pipe(
             timeout(this.timeout),
+            map(response => {
+                try {
+                    const parsed = JSON.parse(response);
+                    return parsed as ApiResponse<T>;
+                } catch {
+                    return {
+                        success: true,
+                        message: response || 'Operación exitosa',
+                        data: null as any
+                    } as ApiResponse<T>;
+                }
+            }),
             catchError(this.handleError)
         );
     }
@@ -89,8 +101,20 @@ export class ApiService {
         const url = this.buildUrl(endpoint);
         const httpOptions = this.buildHttpOptions(options);
 
-        return this.http.put<ApiResponse<T>>(url, body, httpOptions).pipe(
+        return this.http.put(url, body, { ...httpOptions, responseType: 'text' }).pipe(
             timeout(this.timeout),
+            map(response => {
+                try {
+                    const parsed = JSON.parse(response);
+                    return parsed as ApiResponse<T>;
+                } catch {
+                    return {
+                        success: true,
+                        message: response || 'Operación exitosa',
+                        data: null as any
+                    } as ApiResponse<T>;
+                }
+            }),
             catchError(this.handleError)
         );
     }
@@ -105,8 +129,20 @@ export class ApiService {
         const url = this.buildUrl(endpoint);
         const httpOptions = this.buildHttpOptions(options);
 
-        return this.http.patch<ApiResponse<T>>(url, body, httpOptions).pipe(
+        return this.http.patch(url, body, { ...httpOptions, responseType: 'text' }).pipe(
             timeout(this.timeout),
+            map(response => {
+                try {
+                    const parsed = JSON.parse(response);
+                    return parsed as ApiResponse<T>;
+                } catch {
+                    return {
+                        success: true,
+                        message: response || 'Operación exitosa',
+                        data: null as any
+                    } as ApiResponse<T>;
+                }
+            }),
             catchError(this.handleError)
         );
     }
@@ -120,8 +156,23 @@ export class ApiService {
         const url = this.buildUrl(endpoint);
         const httpOptions = this.buildHttpOptions(options);
 
-        return this.http.delete<ApiResponse<T>>(url, httpOptions).pipe(
+        // Usar responseType: 'text' para manejar respuestas de texto plano del backend
+        return this.http.delete(url, { ...httpOptions, responseType: 'text' }).pipe(
             timeout(this.timeout),
+            map(response => {
+                // Intentar parsear como JSON, si falla, crear respuesta exitosa con el texto
+                try {
+                    const parsed = JSON.parse(response);
+                    return parsed as ApiResponse<T>;
+                } catch {
+                    // Si no es JSON, crear una respuesta ApiResponse estándar
+                    return {
+                        success: true,
+                        message: response || 'Eliminado exitosamente',
+                        data: null as any
+                    } as ApiResponse<T>;
+                }
+            }),
             catchError(this.handleError)
         );
     }
@@ -235,6 +286,18 @@ export class ApiService {
      */
     private handleError(error: HttpErrorResponse): Observable<never> {
         let errorMessage = 'Ocurrió un error desconocido';
+        // Intentar extraer mensaje del backend si viene en distintas formas
+        const extractBackendMessage = (errBody: any): string | undefined => {
+            if (!errBody) return undefined;
+            if (typeof errBody === 'string') return errBody;
+            return (
+                errBody.message ||
+                errBody.error ||
+                errBody.detail ||
+                (Array.isArray(errBody.errors) && (errBody.errors[0]?.message || errBody.errors[0])) ||
+                (typeof errBody === 'object' ? JSON.stringify(errBody) : undefined)
+            );
+        };
         
         if (error.error instanceof ErrorEvent) {
             // Error del lado del cliente
@@ -246,7 +309,7 @@ export class ApiService {
                     errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
                     break;
                 case 400:
-                    errorMessage = error.error?.message || 'Solicitud incorrecta';
+                    errorMessage = extractBackendMessage(error.error) || 'Solicitud incorrecta';
                     break;
                 case 401:
                     errorMessage = 'No autorizado. Por favor inicia sesión nuevamente.';
@@ -258,13 +321,13 @@ export class ApiService {
                     errorMessage = 'Recurso no encontrado.';
                     break;
                 case 500:
-                    errorMessage = 'Error interno del servidor.';
+                    errorMessage = extractBackendMessage(error.error) || 'Error interno del servidor.';
                     break;
                 case 503:
                     errorMessage = 'Servicio no disponible. Intenta más tarde.';
                     break;
                 default:
-                    errorMessage = error.error?.message || `Error ${error.status}: ${error.statusText}`;
+                    errorMessage = extractBackendMessage(error.error) || `Error ${error.status}: ${error.statusText}`;
             }
         }
 
@@ -278,7 +341,9 @@ export class ApiService {
             statusCode: error.status,
             message: errorMessage,
             errors: error.error?.errors || [],
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            // Adjuntar cuerpo original para diagnóstico aguas arriba
+            original: error.error
         }));
     }
 }

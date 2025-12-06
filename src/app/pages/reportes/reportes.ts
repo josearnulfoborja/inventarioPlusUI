@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ReporteService } from '@/core/services/reporte.service';
 import { EquipoService } from '@/core/services/equipo.service';
 import { environment } from '../../../environments/environment';
-
+ 
 @Component({
     selector: 'app-reportes',
     standalone: true,
@@ -12,7 +12,7 @@ import { environment } from '../../../environments/environment';
     template: `
         <div class="p-4">
             <h2 class="text-xl font-bold mb-4">Reportes</h2>
-
+ 
             <div class="bg-white p-4 rounded shadow-sm mb-4">
                 <label class="block text-sm font-semibold mb-2">Tipo de reporte</label>
                 <div class="flex gap-2 items-center">
@@ -22,7 +22,7 @@ import { environment } from '../../../environments/environment';
                     <div class="ml-auto text-sm text-gray-600">Generar en: <strong>{{ selectedFormat }}</strong></div>
                 </div>
             </div>
-
+ 
             <!-- Filtros dinámicos según el tipo de reporte -->
             <div class="bg-white p-4 rounded shadow-sm mb-4">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
@@ -46,14 +46,14 @@ import { environment } from '../../../environments/environment';
                         <input type="number" [(ngModel)]="usuarioId" class="input input-bordered w-full" />
                     </div>
                 </div>
-
+ 
                 <div class="mt-4 flex gap-2">
                     <button class="btn btn-primary" (click)="generarReporte('PDF')">📄 Generar PDF</button>
                     <button class="btn btn-secondary" (click)="generarReporte('EXCEL')">📊 Generar Excel</button>
                     <button class="btn btn-outline" (click)="previewUrl()">🔗 Ver URL</button>
                 </div>
             </div>
-
+ 
             <section class="mt-6 text-sm text-gray-600">
                 <p>Los reportes se generan en el backend y la descarga se inicia automáticamente. Si tu backend requiere autenticación, asegúrate de que la sesión esté activa.</p>
             </section>
@@ -63,7 +63,7 @@ import { environment } from '../../../environments/environment';
 export class Reportes implements OnInit {
     prestamosDesde: string | null = null;
     prestamosHasta: string | null = null;
-
+ 
     // UI state
     reportTypes = [
         { value: 'PRESTAMOS', label: 'Préstamos' },
@@ -79,9 +79,9 @@ export class Reportes implements OnInit {
     equipoOptions: Array<{ id: number; name: string }> = [];
     selectedEquipoId: number | null = null;
     usuarioId: number | null = null;
-
+ 
     constructor(private readonly reporteService: ReporteService, private readonly equipoService: EquipoService) {}
-
+ 
     generarPrestamos(formato: 'PDF' | 'EXCEL') {
         // Use the UI date fields (fechaInicio/fechaFin) instead of legacy prestamosDesde/prestamosHasta
         const desde = this.fechaInicio ? new Date(this.fechaInicio) : new Date();
@@ -98,7 +98,7 @@ export class Reportes implements OnInit {
             }
         });
     }
-
+ 
     ngOnInit(): void {
         // cargar equipos para el selector (poco volumen esperado)
         this.equipoService.getEquipos(1, 1000).subscribe({
@@ -113,7 +113,7 @@ export class Reportes implements OnInit {
             }
         });
     }
-
+ 
     /**
      * Generador general que enruta a la función concreta según tipo seleccionado
      */
@@ -121,7 +121,7 @@ export class Reportes implements OnInit {
         this.selectedFormat = formato;
         const fInicio = this.fechaInicio ? new Date(this.fechaInicio) : undefined;
         const fFin = this.fechaFin ? new Date(this.fechaFin) : undefined;
-
+ 
         switch (this.selectedReportType) {
             case 'PRESTAMOS':
                 this.generarPrestamos(formato);
@@ -152,7 +152,7 @@ export class Reportes implements OnInit {
                 alert('Tipo de reporte no soportado');
         }
     }
-
+ 
     /** Muestra/abre la URL que se va a invocar para depuración */
     previewUrl() {
         const base = environment.apiUrl.replace(/\/$/, '');
@@ -160,7 +160,7 @@ export class Reportes implements OnInit {
         const fmt = this.selectedFormat === 'PDF' ? 'pdf' : 'xlsx';
         const from = this.fechaInicio ?? new Date().toISOString().slice(0, 10);
         const to = this.fechaFin ?? new Date().toISOString().slice(0, 10);
-
+ 
         switch (this.selectedReportType) {
             case 'PRESTAMOS':
                 // user provided example uses /api/reports/prestamos?format=pdf&from=...&to=...
@@ -177,7 +177,7 @@ export class Reportes implements OnInit {
             default:
                 url = `${base}/reportes?formato=${fmt}`;
         }
-
+ 
         // Mostrar la URL y ofrecer abrirla en nueva pestaña
         // eslint-disable-next-line no-console
         console.debug('[REPORTES] preview URL:', url);
@@ -186,7 +186,7 @@ ${url}`)) {
             window.open(url, '_blank');
         }
     }
-
+ 
     generarPrestamosVencidos(formato: 'PDF' | 'EXCEL') {
         this.reporteService.generarReportePrestamosVencidos(formato).subscribe({
             next: () => {
@@ -199,7 +199,7 @@ ${url}`)) {
             }
         });
     }
-
+ 
     generarEquipos(formato: 'PDF' | 'EXCEL') {
         this.reporteService.generarReporteEquipos(undefined, undefined, formato).subscribe({
             next: () => {

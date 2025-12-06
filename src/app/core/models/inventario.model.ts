@@ -30,7 +30,15 @@ export interface Equipo {
     modelo: string;
     numeroSerie?: string;
     categoria: string;
-    estado: 'DISPONIBLE' | 'PRESTADO' | 'MANTENIMIENTO' | 'BAJA';
+    /**
+     * Campo de estado (compatibilidad hacia atrás con código textual)
+     */
+    estado: 'DISPONIBLE' | 'PRESTADO' | 'MANTENIMIENTO' | 'BAJA' | string;
+    /**
+     * Nuevo: id del mcodigo para el estado (grupo 'EQUIPO').
+     * Preferir este campo al guardar/editar. Mantener 'estado' como respaldo.
+     */
+    estadoId?: number | null;
     valorEstimado?: number;
     fechaAdquisicion?: Date;
     ubicacion?: string;
@@ -48,7 +56,15 @@ export interface Prestamo {
     fechaDevolucion: string;
     fechaPrevista: string;
     costoTotal: number;
-    estadoPrestamo: string;
+    /**
+     * Campo de estado (compatibilidad hacia atrás con código textual)
+     */
+    estadoPrestamo: string | null;
+    /**
+     * Nuevo: id del mcodigo para el estado de préstamo (grupo 'PRESTAMO').
+     * Preferir este campo al guardar/editar.
+     */
+    estadoPrestamoId?: number | null;
     cliente: Cliente;
     equipo: Equipo;
     especialista: Especialista;
@@ -115,11 +131,12 @@ export interface Usuario {
  */
 export interface Rol {
     id?: number;
+    idRol?: number; // Propiedad usada por el backend
     nombreRol: string;
     /** posibles nombres alternativos que algunos backends devuelven */
     nombre?: string;
     name?: string;
-    descripcion?: string;
+    descripcion?: string | null;
 }
 
 /**
@@ -220,9 +237,12 @@ export interface Modelo {
     id?: number;
     codigo?: string;
     nombre: string; // e.g. 'GBH 2-26'
-    marca?: string;
+    marca?: string | number; // Puede ser string (nombre) o number (ID) dependiendo del contexto
+    marcaId?: number; // ID de la marca (requerido por el backend)
     descripcion?: string;
     activo?: boolean;
+    createdAt?: string | Date;
+    updatedAt?: string | Date;
 }
 
 /**
@@ -233,6 +253,8 @@ export interface Marca {
     nombre: string;
     activo?: boolean;
     descripcion?: string;
+    createdAt?: string | Date;
+    updatedAt?: string | Date;
 }
 
 /**
@@ -263,4 +285,7 @@ export interface Ubicacion {
     telefono?: string;
     descripcion?: string;
     activo?: boolean;
+    /** timestamps manejados por backend; enviar createdAt si es requerido not-null */
+    createdAt?: string | Date;
+    updatedAt?: string | Date;
 }

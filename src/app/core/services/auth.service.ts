@@ -21,8 +21,12 @@ export class AuthService {
     login(username: string, password: string): Observable<void> {
         return this.http.post<any>(this.loginUrl, { username, password }).pipe(
             map((resp) => {
+                console.log('Login response:', resp);
+                
                 // Try common shapes
                 let token: string | undefined;
+                let userData: any = null;
+                
                 if (!resp) return;
                 if (typeof resp === 'string') token = resp;
                 else if (resp.token) token = resp.token;
@@ -31,11 +35,54 @@ export class AuthService {
 
                 if (!token) throw new Error('No token returned from login');
 
+                console.log('Token found:', token);
                 localStorage.setItem(TOKEN_KEY, token);
-                // store user if provided
-                if (resp.user) localStorage.setItem(USER_KEY, JSON.stringify(resp.user));
+                
+                // Store user data - check multiple possible locations
+                if (resp.user) {
+                    userData = resp.user;
+                } else if (resp.data?.user) {
+                    userData = resp.data.user;
+                } else if (resp.idUsuario || resp.nombre || resp.username) {
+                    // User data is directly in response
+                    userData = resp;
+                }
+                
+                console.log('User data to store:', userData);
+                
+                // Si no hay userData en la respuesta, crear uno básico desde el JWT
+                if (!userData) {
+                    try {
+                        const payload = this.decodeToken(token);
+                        console.log('JWT payload:', payload);
+                        
+                        if (payload?.sub) {
+                            // Crear objeto de usuario básico con el username del JWT
+                            userData = {
+                                username: payload.sub,
+                                nombre: payload.sub, // Usar username como nombre temporal
+                                rol: 'Usuario' // Rol por defecto
+                            };
+                            console.log('Created basic user data from JWT:', userData);
+                        }
+                    } catch (e) {
+                        console.error('Error decoding JWT:', e);
+                    }
+                }
+                
+                if (userData) {
+                    localStorage.setItem(USER_KEY, JSON.stringify(userData));
+                    console.log('User data saved to localStorage');
+                }
             })
         );
+    }
+
+    private decodeToken(token: string): any {
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        return payload;
     }
 
     /**

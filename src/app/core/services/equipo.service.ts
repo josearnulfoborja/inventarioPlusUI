@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { ApiResponse, PaginatedResponse } from '@/core/models/api.model';
 import { Equipo, EquipoFiltro } from '@/core/models/inventario.model';
@@ -32,6 +33,43 @@ export class EquipoService {
             page,
             pageSize,
             { params: filtros as any }
+        ).pipe(
+            map(response => {
+                // Extraer IDs de las relaciones @ManyToOne que vienen como objetos
+                if (response.data) {
+                    const equipos = Array.isArray(response.data) ? response.data : 
+                                  (response.data as any).items || (response.data as any).content || [];
+                    
+                    equipos.forEach((equipo: any) => {
+                        // Extraer marca_id si viene como objeto
+                        if (equipo.marca && typeof equipo.marca === 'object' && equipo.marca.id) {
+                            equipo.marca_id = equipo.marca.id;
+                            equipo.marcaId = equipo.marca.id;
+                        }
+                        // Extraer modelo_id si viene como objeto
+                        if (equipo.modelo && typeof equipo.modelo === 'object' && equipo.modelo.id) {
+                            equipo.modelo_id = equipo.modelo.id;
+                            equipo.modeloId = equipo.modelo.id;
+                        }
+                        // Extraer tipo_id si viene como objeto
+                        if (equipo.tipo && typeof equipo.tipo === 'object' && equipo.tipo.id) {
+                            equipo.tipo_id = equipo.tipo.id;
+                            equipo.tipoId = equipo.tipo.id;
+                        }
+                        // Extraer ubicacion_id si viene como objeto
+                        if (equipo.ubicacion && typeof equipo.ubicacion === 'object' && equipo.ubicacion.id) {
+                            equipo.ubicacion_id = equipo.ubicacion.id;
+                            equipo.ubicacionId = equipo.ubicacion.id;
+                        }
+                        // Extraer estado_id si viene como objeto
+                        if (equipo.estadoEquipo && typeof equipo.estadoEquipo === 'object' && equipo.estadoEquipo.id) {
+                            equipo.estado_id = equipo.estadoEquipo.id;
+                            equipo.estadoId = equipo.estadoEquipo.id;
+                        }
+                    });
+                }
+                return response;
+            })
         );
     }
 

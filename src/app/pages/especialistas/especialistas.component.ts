@@ -24,12 +24,9 @@ export class EspecialistasComponent implements OnInit {
   ) {
     this.especialistaForm = this.fb.group({
       nombre: ['', Validators.required],
-      // disponibilidad is boolean; don't use Validators.required (false would be considered invalid)
       disponibilidad: [true]
     });
-  }
-
-  ngOnInit() {
+  }  ngOnInit() {
     this.cargarEspecialistas();
   }
 
@@ -43,38 +40,53 @@ export class EspecialistasComponent implements OnInit {
 
   guardarEspecialista() {
     if (this.especialistaForm.invalid) return;
-    const especialista: Especialista = this.especialistaForm.value;
-    // Asegurar que 'disponibilidad' se envíe como booleano (el backend puede esperar true/false o 0/1)
-    const payload: Especialista = {
-      ...especialista,
-      disponibilidad: this.coerceBoolean(especialista.disponibilidad)
+    
+    const formValue = this.especialistaForm.value;
+    const now = new Date().toISOString();
+    
+    const payload = {
+      nombre: formValue.nombre || '',
+      documento: '',
+      telefono: '',
+      direccion: '',
+      correo: '',
+      disponibilidad: formValue.disponibilidad ? 'Disponible' : 'No disponible',
+      usuarioId: 1,
+      activo: true,
+      fechaCreacion: now,
+      fechaActualizacion: now
     };
-    if (this.editMode && this.selectedEspecialista) {
-      this.especialistasService.updateEspecialista(this.selectedEspecialista.idEspecialista!, payload)
-        .subscribe(() => {
-          this.cargarEspecialistas();
-          this.cancelarEdicion();
-          this.mostrarFormulario = false;
+    
+    console.log('Payload enviado:', payload);
+    
+    if (this.editMode && this.selectedEspecialista && this.selectedEspecialista.idEspecialista) {
+      this.especialistasService.updateEspecialista(this.selectedEspecialista.idEspecialista, payload as any)
+        .subscribe({
+          next: () => {
+            this.cargarEspecialistas();
+            this.cancelarEdicion();
+            this.mostrarFormulario = false;
+          },
+          error: (err) => {
+            console.error('Error al actualizar:', err);
+            alert('Error al actualizar. Revisa consola y Network.');
+          }
         });
     } else {
-      this.especialistasService.addEspecialista(payload)
-        .subscribe(() => {
-          this.cargarEspecialistas();
-          this.especialistaForm.reset({ disponibilidad: true });
-          this.mostrarFormulario = false;
+      this.especialistasService.addEspecialista(payload as any)
+        .subscribe({
+          next: () => {
+            console.log('Especialista agregado exitosamente');
+            this.cargarEspecialistas();
+            this.especialistaForm.reset({ disponibilidad: true });
+            this.mostrarFormulario = false;
+          },
+          error: (err) => {
+            console.error('Error al agregar:', err);
+            alert('Error al agregar. Revisa consola y Network.');
+          }
         });
     }
-  }
-
-  // Coerce different possible UI values into a boolean understood by the backend
-  private coerceBoolean(val: any): boolean {
-    if (typeof val === 'boolean') return val;
-    if (typeof val === 'number') return val !== 0;
-    if (typeof val === 'string') {
-      const s = val.toLowerCase().trim();
-      return s === 'true' || s === '1' || s === 'si' || s === 'sí' || s === 'yes' || s === 'disponible';
-    }
-    return false;
   }
 
   editarEspecialista(especialista: Especialista) {

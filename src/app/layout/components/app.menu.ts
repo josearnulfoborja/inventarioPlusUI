@@ -38,11 +38,12 @@ export class AppMenu {
                     icon: 'pi pi-desktop',
                     routerLink: ['/equipos']
                 },
-                {
+             /*   {
                     label: 'Estados',
                     icon: 'pi pi-list',
                     routerLink: ['/catalogos/estados']
                 },
+                */
                 {
                     label: 'Tipos',
                     icon: 'pi pi-tags',

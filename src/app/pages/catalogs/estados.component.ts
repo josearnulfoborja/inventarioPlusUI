@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { EstadoEquipo } from '@/core/models/inventario.model';
-import { EstadoService } from '@/core/services/estado.service';
+import { Mcodigo } from '@/core/models/inventario.model';
+import { McodigosService } from '@/core/services/mcodigos.service';
 
 @Component({
     selector: 'app-estados-equipos',
@@ -48,7 +48,7 @@ import { EstadoService } from '@/core/services/estado.service';
 
         <div *ngIf="mostrarFormulario" class="mt-4 bg-white p-4 rounded-md border border-gray-100">
           <div class="grid grid-cols-1 gap-3">
-            <input placeholder="Nombre" [(ngModel)]="form.nombre" class="input" />
+            <input placeholder="Nombre *" [(ngModel)]="form.nombre" class="input" />
             <input placeholder="Descripción" [(ngModel)]="form.descripcion" class="input" />
             <label class="flex items-center gap-2">
               <input type="checkbox" [(ngModel)]="form.activo" />
@@ -65,14 +65,14 @@ import { EstadoService } from '@/core/services/estado.service';
     `
 })
 export class EstadosComponent implements OnInit {
-    estados: EstadoEquipo[] = [];
+    estados: Mcodigo[] = [];
     cargando = false;
     error: string | null = null;
     mostrarFormulario = false;
-  form: Partial<EstadoEquipo> = { nombre: '', descripcion: '', activo: true };
+  form: Partial<Mcodigo> = { grupo: 'EQUIPO', codigo: '', nombre: '', descripcion: '', activo: true };
     editingId?: number;
 
-    constructor(private readonly service: EstadoService) {}
+    constructor(private readonly mcodigos: McodigosService) {}
 
     ngOnInit(): void {
         this.load();
@@ -81,37 +81,76 @@ export class EstadosComponent implements OnInit {
   load() {
     this.cargando = true;
     this.error = null;
-    this.service.listar().subscribe({
+    this.mcodigos.listar('EQUIPO').subscribe({
       next: (r) => {
-        console.log('EstadoService.listar() result:', r);
-        this.estados = r;
+        this.estados = r || [];
         this.cargando = false;
       },
       error: (e) => {
-        console.error('Error loading estados from EstadoService:', e);
+        console.error('Error loading mcodigos EQUIPO:', e);
         this.error = 'Error cargando estados: ' + (e?.message ?? JSON.stringify(e));
         this.cargando = false;
       }
     });
   }
 
-    nuevo() { this.form = { codigo: '', nombre: '', activo: true }; this.editingId = undefined; this.mostrarFormulario = true; }
-    editar(s: EstadoEquipo) { this.form = { ...s }; this.editingId = s.id; this.mostrarFormulario = true; }
+    nuevo() { this.form = { grupo: 'EQUIPO', codigo: '', nombre: '', descripcion: '', activo: true }; this.editingId = undefined; this.mostrarFormulario = true; }
+    editar(s: Mcodigo) { this.form = { ...s }; this.editingId = s.id; this.mostrarFormulario = true; }
 
   guardar() {
-    const payload = { nombre: this.form.nombre, descripcion: this.form.descripcion, activo: !!this.form.activo } as EstadoEquipo;
+    if (!this.form.nombre) { alert('El nombre es obligatorio'); return; }
+    
+    // Generar código automáticamente si es nuevo registro (numérico secuencial)
+    const codigoGenerado = this.editingId ? this.form.codigo : this.generarCodigoNumerico();
+    
+    const payload: any = {
+      grupo: 'EQUIPO',
+      codigo: String(codigoGenerado),
+      nombre: String(this.form.nombre).trim(),
+      descripcion: this.form.descripcion?.trim(),
+      activo: !!this.form.activo,
+      id: this.editingId
+    };
+    
+    // Agregar timestamps requeridos por el backend
+    const now = new Date().toISOString();
+    if (!this.editingId) {
+      payload.createdAt = now;
+    }
+    payload.updatedAt = now;
+    
     if (this.editingId) {
-      this.service.actualizar(this.editingId, payload).subscribe({ next: () => { this.mostrarFormulario = false; this.load(); }, error: () => alert('Error al actualizar') });
+      this.mcodigos.actualizar(this.editingId, payload).subscribe({
+        next: () => { this.mostrarFormulario = false; this.load(); },
+        error: () => alert('Error al actualizar estado')
+      });
     } else {
-      this.service.crear(payload).subscribe({ next: () => { this.mostrarFormulario = false; this.load(); }, error: () => alert('Error al crear') });
+      this.mcodigos.crear(payload).subscribe({
+        next: () => { this.mostrarFormulario = false; this.load(); },
+        error: () => alert('Error al crear estado')
+      });
     }
   }
 
     eliminar(id?: number) {
-        if (!id) return;
-        if (!confirm('Eliminar estado?')) return;
-        this.service.eliminar(id).subscribe({ next: () => this.load(), error: () => alert('Error al eliminar') });
+      if (!id) return;
+      if (!confirm('Eliminar estado?')) return;
+      this.mcodigos.eliminar(id).subscribe({ next: () => this.load(), error: () => alert('Error al eliminar') });
     }
 
     cancelar() { this.mostrarFormulario = false; }
+
+    generarCodigoNumerico(): number {
+      // Encontrar el código numérico más alto y sumar 1
+      if (this.estados.length === 0) return 1;
+      
+      const codigosNumericos = this.estados
+        .map(e => parseInt(e.codigo, 10))
+        .filter(c => !isNaN(c));
+      
+      if (codigosNumericos.length === 0) return 1;
+      
+      const maxCodigo = Math.max(...codigosNumericos);
+      return maxCodigo + 1;
+    }
 }
