@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, of, throwError, from as rxFrom } from 'rxjs';
+import { catchError, concatMap, filter, map, take, defaultIfEmpty, tap } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { ApiResponse, PaginatedResponse } from '@/core/models/api.model';
 import { Reporte, DashboardStats } from '@/core/models/inventario.model';
@@ -127,6 +127,39 @@ export class ReporteService {
     generarReportePrestamosVencidos(formato: 'PDF' | 'EXCEL' = 'PDF'): Observable<Blob> {
         const extension = formato === 'PDF' ? 'pdf' : 'xlsx';
         return this.apiService.downloadFile(`${this.endpoint}/prestamos-vencidos?formato=${formato}`, `reporte-prestamos-vencidos.${extension}`);
+    }
+
+    /** Genera el reporte de devoluciones */
+    generarReporteDevoluciones(fechaInicio: Date, fechaFin: Date, formato: 'PDF' | 'EXCEL' = 'PDF'): Observable<Blob> {
+        const fmt = formato === 'PDF' ? 'pdf' : 'excel';
+        const from = fechaInicio ? fechaInicio.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        const to = fechaFin ? fechaFin.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
+        const spanishEndpoint1 = `${this.endpoint}/devoluciones?fechaInicio=${from}&fechaFin=${to}&formato=${fmt}`;
+        const spanishEndpoint2 = `${this.endpoint}/devoluciones?from=${from}&to=${to}&formato=${fmt}`;
+        const englishEndpoint1 = `/reports/devoluciones?format=${fmt}&from=${from}&to=${to}`;
+        const englishEndpoint2 = `/reports/devoluciones?format=${fmt}&desde=${from}&hasta=${to}`;
+
+        const endpoints = [spanishEndpoint1, spanishEndpoint2, englishEndpoint1, englishEndpoint2];
+        const extension = fmt === 'pdf' ? 'pdf' : 'xlsx';
+
+        // Try endpoints sequentially until one succeeds and returns a Blob
+        return rxFrom(endpoints).pipe(
+            concatMap((url) =>
+                this.apiService.downloadFile(url, `reporte-devoluciones.${extension}`).pipe(
+                    tap(() => console.debug('[REPORTES] intento URL:', url)),
+                    map((blob) => ({ blob, url })),
+                    catchError((err) => {
+                        console.debug('[REPORTES] fallo URL:', url, err && (err.message || err));
+                        return of(null);
+                    })
+                )
+            ),
+            filter((r) => !!r),
+            take(1),
+            defaultIfEmpty(null),
+            concatMap((res: any) => (res ? of(res.blob) : throwError(() => new Error('No se pudo generar el reporte de devoluciones desde ningún endpoint'))))
+        );
     }
 
     generarReporteMantenimiento(formato: 'PDF' | 'EXCEL' = 'PDF'): Observable<Blob> {

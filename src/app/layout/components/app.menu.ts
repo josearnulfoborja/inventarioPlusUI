@@ -101,6 +101,11 @@ export class AppMenu {
                     routerLink: ['/evaluaciones']
                 },
                 {
+                    label: 'Devoluciones',
+                    icon: 'pi pi-reply',
+                    routerLink: ['/devoluciones']
+                },
+                {
                     label: 'Reportes',
                     icon: 'pi pi-chart-bar',
                     routerLink: ['/reportes']

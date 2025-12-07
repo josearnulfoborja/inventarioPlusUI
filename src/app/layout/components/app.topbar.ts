@@ -125,9 +125,27 @@ import { AuthService } from '@/core/services/auth.service';
                         </button>
                     </li>
                     <li>
-                        <button class="app-logout-button" (click)="logout()" title="Logout" [disabled]="isLoggingOut">
-                            <i class="pi pi-sign-out"></i>
-                        </button>
+                        <a pStyleClass="@next" enterFromClass="hidden" enterActiveClass="animate-scalein" leaveToClass="hidden" leaveActiveClass="animate-fadeout" [hideOnOutsideClick]="true" class="flex items-center gap-2 cursor-pointer">
+                            <img src="/layout/images/avatar/avatar5.png" class="w-8 h-8 rounded-full" style="object-fit:cover" />
+                            <span class="ml-2 text-sm">{{ displayName }}</span>
+                            <i class="pi pi-angle-down ml-2"></i>
+                        </a>
+                        <div class="hidden">
+                            <ul class="list-none p-0 m-0">
+                                <li>
+                                    <a class="py-2 px-3 flex gap-2 cursor-pointer text-color hover:text-primary items-center" routerLink="/profile/me">
+                                        <i class="pi pi-user-edit text-lg"></i>
+                                        <span>Mi Perfil</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="py-2 px-3 flex gap-2 cursor-pointer text-color hover:text-primary items-center" (click)="logout()">
+                                        <i class="pi pi-sign-out text-lg"></i>
+                                        <span>Logout</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </li>
                 </ul>
             </div>
@@ -149,6 +167,14 @@ export class AppTopbar {
     activeItem!: number;
 
     layoutService: LayoutService = inject(LayoutService);
+
+    get displayName(): string {
+        const u = this.authService.getUser();
+        if (!u) return 'Usuario';
+        const nombre = (u as any)['nombre'] ?? (u as any)['name'] ?? (u as any)['username'] ?? '';
+        const apellido = (u as any)['apellido'] ?? (u as any)['lastName'] ?? '';
+        return (nombre ? nombre + (apellido ? ' ' + apellido : '') : (u as any)['username']) || 'Usuario';
+    }
 
     get mobileTopbarActive(): boolean {
         return this.layoutService.layoutState().topbarMenuActive;

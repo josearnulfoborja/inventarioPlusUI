@@ -41,4 +41,6 @@ export interface RequestOptions {
     headers?: { [key: string]: string };
     responseType?: 'json' | 'blob' | 'text';
     reportProgress?: boolean;
+    // When true, the browser will send cookies and other credentials with the request
+    withCredentials?: boolean;
 }

@@ -126,7 +126,8 @@ export class EquipoService {
      * @param equipo Datos del equipo
      */
     crearEquipo(equipo: Equipo): Observable<ApiResponse<Equipo>> {
-        return this.apiService.post<Equipo>(this.endpoint, equipo);
+        // Enviar credenciales (cookies) por si el backend usa autenticación por sesión
+        return this.apiService.post<Equipo>(this.endpoint, equipo, { withCredentials: true });
     }
 
     /**

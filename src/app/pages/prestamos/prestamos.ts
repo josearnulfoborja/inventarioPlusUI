@@ -55,7 +55,7 @@ import { McodigosService } from '@/core/services/mcodigos.service';
                                 <td class="px-4 py-3">{{ prestamo.fechaPrevista | date:'shortDate' }}</td>
                                 <td class="px-4 py-3">{{ prestamo.fechaDevolucion | date:'shortDate' }}</td>
                                 <td class="px-4 py-3">{{ prestamo.costoTotal | currency:'USD' }}</td>
-                                <td class="px-4 py-3">{{ getEstadoPrestamoNombre(prestamo) }}</td>
+                                <td class="px-4 py-3" [title]="getEstadoPrestamoTooltip(prestamo)">{{ getEstadoPrestamoNombre(prestamo) }}</td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="flex gap-2 justify-center">
                                         <button (click)="verDetalle(prestamo)" class="text-blue-500 hover:text-blue-700" title="Ver detalles">
@@ -1120,15 +1120,63 @@ export class Prestamos implements OnInit {
         }
     }
 
-    // Presentación: nombre de estado desde id o código
+    // Presentación: nombre de estado desde id o código. Busca explícitamente dentro
+    // del conjunto de mcódigos cargados para el grupo 'PRESTAMO' y ofrece fallback
+    // a la etiqueta cruda si no se encuentra.
     getEstadoPrestamoNombre(p: Prestamo): string {
-        if (p?.estadoPrestamoId != null && this.estadoPrestamoNombreById[p.estadoPrestamoId]) {
-            return this.estadoPrestamoNombreById[p.estadoPrestamoId];
-        }
-        if (p?.estadoPrestamo) {
-            const code = this.normalizeToCodigo(p.estadoPrestamo as any) || '';
-            return (code && this.estadoPrestamoNombreByCodigo[code]) ? this.estadoPrestamoNombreByCodigo[code] : p.estadoPrestamo;
+        try {
+            // 1) Buscar por id dentro de los mcodigos del grupo PRESTAMO
+            if (p?.estadoPrestamoId != null) {
+                const idNum = Number(p.estadoPrestamoId);
+                const foundById = (this.estadosPrestamo || []).find(e => Number(e.id) === idNum);
+                if (foundById && foundById.nombre) return foundById.nombre;
+            }
+
+            // 2) Si llega un código o etiqueta, normalizar y buscar por codigo
+            if (p?.estadoPrestamo) {
+                const code = this.normalizeToCodigo(p.estadoPrestamo as any);
+                if (code) {
+                    const foundByCode = (this.estadosPrestamo || []).find(e => String(e.codigo) === code);
+                    if (foundByCode && foundByCode.nombre) return foundByCode.nombre;
+                }
+
+                // 3) Buscar por nombre exacto (por si backend ya envía el nombre legible)
+                const byName = (this.estadosPrestamo || []).find(e => String(e.nombre).toLowerCase() === String(p.estadoPrestamo).toLowerCase());
+                if (byName && byName.nombre) return byName.nombre;
+
+                // 4) Fallback: no mostrar valores fuera del grupo 'PRESTAMO'
+                // Sólo devolvemos estados que estén definidos en mcodigos para PRESTAMO.
+                return '-';
+            }
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.debug('[DEBUG] getEstadoPrestamoNombre error', err);
         }
         return '-';
+    }
+
+    // Tooltip helper: muestra el código o id asociado para ayudar al soporte
+    getEstadoPrestamoTooltip(p: Prestamo): string {
+        if (!p) return '';
+        const parts: string[] = [];
+        if (p.estadoPrestamoId != null) parts.push(`id:${p.estadoPrestamoId}`);
+        if (p.estadoPrestamo) parts.push(`val:${p.estadoPrestamo}`);
+        // intentar obtener código si existe en mcodigos
+        try {
+            const idNum = p.estadoPrestamoId != null ? Number(p.estadoPrestamoId) : null;
+            let found: any = null;
+            if (idNum != null) found = (this.estadosPrestamo || []).find(e => Number(e.id) === idNum) ?? null;
+            if (!found && p.estadoPrestamo) {
+                const code = this.normalizeToCodigo(p.estadoPrestamo as any);
+                if (code) found = (this.estadosPrestamo || []).find(e => String(e.codigo) === code) ?? null;
+            }
+            if (found) {
+                if (found.codigo) parts.push(`code:${found.codigo}`);
+                if (found.grupo) parts.push(`grupo:${found.grupo}`);
+            }
+        } catch (e) {
+            // ignore
+        }
+        return parts.join(' | ');
     }
 }

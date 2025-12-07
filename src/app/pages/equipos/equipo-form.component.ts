@@ -38,7 +38,7 @@ import { forkJoin } from 'rxjs';
           <label class="block text-sm font-medium">Modelo</label>
           <select formControlName="modeloId" class="input w-full">
             <option [ngValue]="null">Seleccione un modelo...</option>
-            <option *ngFor="let m of modelos" [ngValue]="m.id">{{ m.nombre }}</option>
+            <option *ngFor="let m of filteredModelos" [ngValue]="m.id">{{ m.nombre }}</option>
           </select>
         </div>
         <div>
@@ -91,6 +91,7 @@ export class EquipoFormComponent implements OnInit {
   marcas: Marca[] = [];
   tipos: TipoEquipo[] = [];
   modelos: Modelo[] = [];
+  filteredModelos: Modelo[] = [];
   ubicaciones: Ubicacion[] = [];
 
   constructor(
@@ -119,6 +120,8 @@ export class EquipoFormComponent implements OnInit {
     // Suscribirse a cambios en marca, tipo y modelo para generar el nombre automáticamente
     this.form.get('categoriaId')?.valueChanges.subscribe(() => this.generarNombre());
     this.form.get('marcaId')?.valueChanges.subscribe(() => this.generarNombre());
+    // Also update modelos list when marca changes
+    this.form.get('marcaId')?.valueChanges.subscribe((mId: any) => this.updateFilteredModelos(mId));
     this.form.get('modeloId')?.valueChanges.subscribe(() => this.generarNombre());
 
     // Cargar todos los datos necesarios en paralelo
@@ -138,6 +141,8 @@ export class EquipoFormComponent implements OnInit {
         this.marcas = result.marcas || [];
         this.tipos = result.tipos || [];
         this.modelos = result.modelos || [];
+        // initialize filteredModelos to all modelos initially
+        this.filteredModelos = Array.isArray(this.modelos) ? [...this.modelos] : [];
         this.ubicaciones = result.ubicaciones || [];
         
         console.log('Estados de EQUIPO cargados:', this.estadosEquipo);
@@ -186,6 +191,10 @@ export class EquipoFormComponent implements OnInit {
             activo: equipoData.activo !== undefined ? equipoData.activo : true
           });
 
+          // ensure modelos list is filtered by the equipo's marca so modelo select shows the right options
+          const initialMarca = this.form.get('marcaId')?.value;
+          this.updateFilteredModelos(initialMarca);
+
           // Generar nombre después de cargar los datos
           this.generarNombre();
         }
@@ -208,6 +217,46 @@ export class EquipoFormComponent implements OnInit {
       return Number(value.id);
     }
     return null;
+  }
+
+  // Extract marca id from a modelo object (if present)
+  private getModeloMarcaId(modelo: any): number | null {
+    if (!modelo) return null;
+    if (modelo.marca != null) {
+      if (typeof modelo.marca === 'object' && modelo.marca.id != null) return Number(modelo.marca.id);
+      if (typeof modelo.marca === 'number') return Number(modelo.marca);
+      if (typeof modelo.marca === 'string') {
+        const n = Number(modelo.marca);
+        if (!Number.isNaN(n)) return n;
+      }
+    }
+    if (modelo.marcaId != null) return Number(modelo.marcaId);
+    if (modelo.marca_id != null) return Number(modelo.marca_id);
+    return null;
+  }
+
+  private updateFilteredModelos(marcaId: any) {
+    const mid = this.extractId(marcaId);
+    if (mid == null) {
+      // no brand selected -> show all models
+      this.filteredModelos = Array.isArray(this.modelos) ? [...this.modelos] : [];
+      return;
+    }
+    const filtered = (this.modelos || []).filter((m: any) => {
+      const mm = this.getModeloMarcaId(m);
+      if (mm != null) return Number(mm) === Number(mid);
+      // some modelos may include marca as string name; as fallback try modelo.marcaNombre or modelo.marca?.nombre
+      const marcaName = m?.marcaNombre ?? m?.marca?.nombre ?? m?.brand ?? null;
+      if (marcaName && this.marcas) {
+        const marcaObj = (this.marcas || []).find((b: any) => String(b.nombre ?? b).toLowerCase() === String(marcaName).toLowerCase());
+        if (marcaObj && marcaObj.id != null) return Number(marcaObj.id) === Number(mid);
+      }
+      // if modelo has no marca info, keep it out
+      return false;
+    });
+
+    // If no models matched, fallback to showing all (safer UX)
+    this.filteredModelos = filtered.length ? filtered : (Array.isArray(this.modelos) ? [...this.modelos] : []);
   }
 
   // Método auxiliar para obtener nombre de objetos tipo/categoria
@@ -309,18 +358,32 @@ export class EquipoFormComponent implements OnInit {
     // Agregar los IDs de las relaciones directamente en los campos que el backend espera
     if (value.marcaId != null) {
       payload.marca_id = Number(value.marcaId);
+      payload.marcaId = Number(value.marcaId);
+      payload.marca = Number(value.marcaId);
     }
     
     if (value.categoriaId != null) {
       payload.categoria_id = Number(value.categoriaId);
+      payload.categoriaId = Number(value.categoriaId);
+      // some backends expect 'tipo' instead of 'categoria' - mirror both
+      payload.tipo_id = Number(value.categoriaId);
+      payload.tipoId = Number(value.categoriaId);
+      payload.tipo = Number(value.categoriaId);
     }
     
     if (value.modeloId != null) {
       payload.modelo_id = Number(value.modeloId);
+      payload.modeloId = Number(value.modeloId);
+      payload.modelo = Number(value.modeloId);
     }
     
     if (value.ubicacionId != null) {
       payload.ubicacion_id = Number(value.ubicacionId);
+      payload.ubicacionId = Number(value.ubicacionId);
+      payload.ubicacion = Number(value.ubicacionId);
+      // Some APIs call the workshop field 'taller' - include those variants too
+      payload.tallerId = Number(value.ubicacionId);
+      payload.taller = Number(value.ubicacionId);
     }
     
     if (value.tipoId != null) {
@@ -332,8 +395,44 @@ export class EquipoFormComponent implements OnInit {
       payload.estado_id = selectedEstadoId;
     }
 
-    console.log('Payload a enviar:', payload);
-    this.guardar.emit({ equipo: payload });
+    console.log('Payload raw (mirrored):', payload);
+
+    // Build a clean backend-friendly payload (snake_case, booleans, expected ID fields)
+    const backendPayload: any = {
+      nombre: payload.nombre,
+      descripcion: payload.descripcion || null,
+      codigo: payload.codigo || null,
+      numero_serie: payload.numero_serie ?? payload.numeroSerie ?? null,
+      // also include the alternate spelling sometimes found in older APIs
+      numero_serial: payload.numero_serie ?? payload.numeroSerie ?? null,
+
+      // Dates: prefer ISO without Z if backend expects LocalDateTime (strip Z)
+      fecha_creacion: (payload.fecha_creacion || fechaISO).replace(/Z$/, ''),
+      fecha_actualizacion: (payload.fecha_actualizacion || fechaISO).replace(/Z$/, ''),
+
+      // Numeric/monetary fields if present
+      costo_creacion: payload.costo_creacion ?? payload.costoCreacion ?? null,
+      valor_estimado: payload.valor_estimado ?? payload.valorEstimado ?? null,
+      costo_dia: payload.costo_dia ?? payload.costoDia ?? null,
+
+      // Relaciones como IDs (snake_case)
+      marca_id: payload.marca_id ?? payload.marcaId ?? payload.marca ?? null,
+      modelo_id: payload.modelo_id ?? payload.modeloId ?? payload.modelo ?? null,
+      tipo_id: payload.tipo_id ?? payload.tipoId ?? payload.tipo ?? payload.categoria_id ?? payload.categoriaId ?? null,
+      estado_id: payload.estado_id ?? payload.estadoId ?? null,
+      ubicacion_id: payload.ubicacion_id ?? payload.ubicacionId ?? payload.ubicacion ?? null,
+
+      // Flags as booleans (convert 0/1 to false/true)
+      requiere_inspeccion: !!(payload.requiere_inspeccion === true || payload.requiere_inspeccion === 1 || payload.requiereInspeccion === 1 || payload.requiereInspeccion === true),
+      requiere_especialista: !!(payload.requiere_especialista === true || payload.requiere_especialista === 1 || payload.requiereEspecialista === 1 || payload.requiereEspecialista === true),
+      activo: !!(payload.activo === true || payload.activo === 1)
+    };
+
+    // Include id when editing
+    if (payload.id) backendPayload.id = Number(payload.id);
+
+    console.log('Backend payload (snake_case):', backendPayload);
+    this.guardar.emit({ equipo: backendPayload });
   }
 
     onCancelar() {

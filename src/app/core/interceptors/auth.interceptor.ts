@@ -13,7 +13,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
     // Obtener token del localStorage usando nuestra clave
     const token = localStorage.getItem('inventarioplus_token');
-    
+    // DEBUG: log token presence to help diagnose 403/CORS issues
+    try {
+        console.debug('[authInterceptor] token present:', !!token);
+    } catch (e) {
+        // ignore in environments without console
+    }
     // Clonar la petición y agregar el token si existe
     let authReq = req;
     if (token) {

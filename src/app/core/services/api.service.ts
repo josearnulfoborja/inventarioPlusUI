@@ -27,7 +27,9 @@ export class ApiService {
      */
     get<T>(endpoint: string, options?: RequestOptions): Observable<ApiResponse<T>> {
         const url = this.buildUrl(endpoint);
-        const httpOptions = this.buildHttpOptions(options);
+        // By default include credentials for GET requests so session cookies are sent
+        const optsWithCreds: RequestOptions = { ...(options || {}), withCredentials: options?.withCredentials ?? true };
+        const httpOptions = this.buildHttpOptions(optsWithCreds);
 
         return this.http.get<ApiResponse<T>>(url, httpOptions).pipe(
             timeout(this.timeout),
@@ -55,7 +57,9 @@ export class ApiService {
         };
 
         const url = this.buildUrl(endpoint);
-        const httpOptions = this.buildHttpOptions({ ...options, params });
+        // Include credentials by default for paginated GETs too
+        const optsWithCreds: RequestOptions = { ...(options || {}), params, withCredentials: options?.withCredentials ?? true };
+        const httpOptions = this.buildHttpOptions(optsWithCreds);
 
         return this.http.get<PaginatedResponse<T>>(url, httpOptions).pipe(
             timeout(this.timeout),
@@ -190,7 +194,8 @@ export class ApiService {
         return this.http.get(url, {
             responseType: 'blob',
             headers: httpOptions.headers,
-            params: httpOptions.params
+            params: httpOptions.params,
+            withCredentials: (httpOptions as any).withCredentials
         }).pipe(
             timeout(this.timeout),
             map(blob => {
@@ -226,7 +231,13 @@ export class ApiService {
             }
         }
 
-        return this.http.post<ApiResponse<T>>(url, formData).pipe(
+        const httpOptions = this.buildHttpOptions();
+
+        return this.http.post<ApiResponse<T>>(url, formData, {
+            headers: httpOptions.headers,
+            params: httpOptions.params,
+            withCredentials: (httpOptions as any).withCredentials
+        }).pipe(
             timeout(this.timeout),
             catchError(this.handleError)
         );
@@ -244,7 +255,7 @@ export class ApiService {
     /**
      * Construye las opciones HTTP (headers, params)
      */
-    private buildHttpOptions(options?: RequestOptions): { headers: HttpHeaders; params: HttpParams } {
+    private buildHttpOptions(options?: RequestOptions): { headers: HttpHeaders; params: HttpParams; withCredentials?: boolean } {
         let httpParams = new HttpParams();
         let httpHeaders = new HttpHeaders({
             'Content-Type': 'application/json'
@@ -277,7 +288,8 @@ export class ApiService {
 
         return {
             headers: httpHeaders,
-            params: httpParams
+            params: httpParams,
+            withCredentials: options?.withCredentials ?? false
         };
     }
 

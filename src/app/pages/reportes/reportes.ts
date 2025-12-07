@@ -67,10 +67,11 @@ export class Reportes implements OnInit {
     // UI state
     reportTypes = [
         { value: 'PRESTAMOS', label: 'Préstamos' },
+        { value: 'DEVOLUCIONES', label: 'Devoluciones' },
         { value: 'EQUIPOS', label: 'Equipos' },
         { value: 'INSPECCIONES', label: 'Inspecciones/Evaluaciones' },
         { value: 'MANTENIMIENTO', label: 'Mantenimiento' },
-        { value: 'ACTIVIDAD_USUARIO', label: 'Actividad por Usuario' }
+        // { value: 'ACTIVIDAD_USUARIO', label: 'Actividad por Usuario' }
     ];
     selectedReportType: string = 'PRESTAMOS';
     selectedFormat: string = 'PDF';
@@ -126,6 +127,12 @@ export class Reportes implements OnInit {
             case 'PRESTAMOS':
                 this.generarPrestamos(formato);
                 break;
+            case 'DEVOLUCIONES':
+                this.reporteService.generarReporteDevoluciones(fInicio ?? new Date(), fFin ?? new Date(), formato).subscribe({
+                    next: () => console.debug('[REPORTES] devoluciones descargadas', formato),
+                    error: (err) => { console.error('Error generando reporte de devoluciones', err); alert('Error al generar el reporte de devoluciones'); }
+                });
+                break;
             case 'EQUIPOS':
                 this.generarEquipos(formato);
                 break;
@@ -165,6 +172,9 @@ export class Reportes implements OnInit {
             case 'PRESTAMOS':
                 // user provided example uses /api/reports/prestamos?format=pdf&from=...&to=...
                 url = `${base.replace(/\/api$/, '')}/api/reports/prestamos?format=${fmt}&from=${from}&to=${to}`;
+                break;
+            case 'DEVOLUCIONES':
+                url = `${base.replace(/\/api$/, '')}/api/reports/devoluciones?format=${fmt}&from=${from}&to=${to}`;
                 break;
             case 'INSPECCIONES':
                     // Many backends expose the mixed path: /api/reports/inspecciones?format=pdf

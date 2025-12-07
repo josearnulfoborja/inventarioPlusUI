@@ -63,6 +63,11 @@ export const appRoutes: Routes = [
                 loadComponent: () => import('@/pages/evaluaciones/evaluaciones').then((c) => c.EvaluacionesComponent),
                 data: { breadcrumb: 'Evaluaciones' }
             },
+            {
+                path: 'devoluciones',
+                loadComponent: () => import('@/pages/devoluciones/devoluciones.component').then(c => c.DevolucionesComponent),
+                data: { breadcrumb: 'Devoluciones' }
+            },
                 {
                     path: 'usuarios',
                     loadComponent: () => import('src/app/pages/usuarios/usuarios.component').then(m => m.UsuariosComponent)
@@ -120,8 +125,15 @@ export const appRoutes: Routes = [
             },
             {
                 path: 'profile',
+                pathMatch: 'full',
                 loadChildren: () => import('@/pages/usermanagement/usermanagement.routes'),
                 data: { breadcrumb: 'User Management' }
+            }
+            ,
+            {
+                path: 'profile/me',
+                loadComponent: () => import('@/pages/profile/profile.component').then((c) => c.ProfileComponent),
+                data: { breadcrumb: 'Mi Perfil' }
             }
         ]
     },

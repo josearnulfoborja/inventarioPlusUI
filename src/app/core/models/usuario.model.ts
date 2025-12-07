@@ -11,6 +11,8 @@ export interface Usuario {
   fechaCreacion?: string;
   fechaActualizacion?: string;
   dui?: string;
+  // Filename or URL of the user's avatar image (optional)
+  avatar?: string;
   // Optional nested role object (some backends return this)
   rol?: any;
   // Derived display name for templates
