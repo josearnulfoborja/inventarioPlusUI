@@ -36,8 +36,8 @@ import { Usuario } from '@/core/models/usuario.model';
           <div class="mt-6 w-full">
             <input type="file" (change)="onFileSelected($event)" accept="image/*" class="block w-full" />
             <div class="mt-3 flex gap-2">
-              <button class="btn btn-primary" (click)="uploadAvatar()" [disabled]="!selectedFile">Subir imagen</button>
-              <button class="btn" (click)="cancel()">Cancelar</button>
+              <button type="button" class="btn btn-primary" (click)="uploadAvatar()" [disabled]="!selectedFile">Subir imagen</button>
+              <button type="button" class="btn" (click)="cancel()">Cancelar</button>
             </div>
           </div>
         </div>
@@ -48,7 +48,7 @@ import { Usuario } from '@/core/models/usuario.model';
           <div *ngIf="error" class="mb-3 text-sm text-yellow-700 bg-yellow-100 p-2 rounded">{{ error }}</div>
           <div *ngIf="successMessage" class="mb-3 text-sm text-green-700 bg-green-100 p-2 rounded">{{ successMessage }}</div>
 
-          <form *ngIf="perfil" class="space-y-4">
+          <form *ngIf="perfil" class="space-y-4" (ngSubmit)="save()">
             <div>
               <label class="block text-sm text-gray-700 mb-1">Correo electrónico</label>
               <input [(ngModel)]="formModel.correoElectronico" name="correoElectronico" class="input w-full border rounded px-3 py-2" />
@@ -73,7 +73,7 @@ import { Usuario } from '@/core/models/usuario.model';
             </div>
 
             <div>
-              <button type="button" class="btn btn-primary" (click)="save()">Guardar Cambios</button>
+              <button type="submit" class="btn btn-primary">Guardar Cambios</button>
             </div>
           </form>
 

@@ -103,7 +103,9 @@ export class ApiService {
      */
     put<T>(endpoint: string, body: any, options?: RequestOptions): Observable<ApiResponse<T>> {
         const url = this.buildUrl(endpoint);
-        const httpOptions = this.buildHttpOptions(options);
+        // By default include credentials for PUT requests
+        const optsWithCreds: RequestOptions = { ...(options || {}), withCredentials: options?.withCredentials ?? true };
+        const httpOptions = this.buildHttpOptions(optsWithCreds);
 
         return this.http.put(url, body, { ...httpOptions, responseType: 'text' }).pipe(
             timeout(this.timeout),
@@ -131,7 +133,9 @@ export class ApiService {
      */
     patch<T>(endpoint: string, body: any, options?: RequestOptions): Observable<ApiResponse<T>> {
         const url = this.buildUrl(endpoint);
-        const httpOptions = this.buildHttpOptions(options);
+        // By default include credentials for PATCH requests
+        const optsWithCreds: RequestOptions = { ...(options || {}), withCredentials: options?.withCredentials ?? true };
+        const httpOptions = this.buildHttpOptions(optsWithCreds);
 
         return this.http.patch(url, body, { ...httpOptions, responseType: 'text' }).pipe(
             timeout(this.timeout),
@@ -158,7 +162,9 @@ export class ApiService {
      */
     delete<T>(endpoint: string, options?: RequestOptions): Observable<ApiResponse<T>> {
         const url = this.buildUrl(endpoint);
-        const httpOptions = this.buildHttpOptions(options);
+        // By default include credentials for DELETE requests
+        const optsWithCreds: RequestOptions = { ...(options || {}), withCredentials: options?.withCredentials ?? true };
+        const httpOptions = this.buildHttpOptions(optsWithCreds);
 
         // Usar responseType: 'text' para manejar respuestas de texto plano del backend
         return this.http.delete(url, { ...httpOptions, responseType: 'text' }).pipe(

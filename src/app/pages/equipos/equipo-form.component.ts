@@ -21,6 +21,10 @@ import { forkJoin } from 'rxjs';
           <input formControlName="nombre" class="input w-full bg-gray-100" readonly />
         </div>
         <div>
+          <label class="block text-sm font-medium">Código</label>
+          <input formControlName="codigo" class="input w-full" placeholder="Ej: EQ-LAP-001" />
+        </div>
+        <div>
           <label class="block text-sm font-medium">Marca</label>
           <select formControlName="marcaId" class="input w-full">
             <option [ngValue]="null">Seleccione una marca...</option>
@@ -43,7 +47,7 @@ import { forkJoin } from 'rxjs';
         </div>
         <div>
           <label class="block text-sm font-medium">Número de serie</label>
-          <input formControlName="numeroSerie" class="input w-full" />
+          <input formControlName="numeroSerie" class="input w-full" placeholder="SN-123456" />
         </div>
         <div>
           <label class="block text-sm font-medium">Estado</label>
@@ -58,6 +62,26 @@ import { forkJoin } from 'rxjs';
             <option [ngValue]="null">Seleccione una ubicación...</option>
             <option *ngFor="let u of ubicaciones" [ngValue]="u.id">{{ u.nombre }}</option>
           </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Fecha de adquisición</label>
+          <input formControlName="fechaAdquisicion" type="date" class="input w-full" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Valor estimado ($)</label>
+          <input formControlName="valorEstimado" type="number" step="0.01" class="input w-full" placeholder="0.00" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Costo de creación ($)</label>
+          <input formControlName="costoCreacion" type="number" step="0.01" class="input w-full" placeholder="0.00" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Costo por día ($)</label>
+          <input formControlName="costoDia" type="number" step="0.01" class="input w-full" placeholder="0.00" />
+        </div>
+        <div class="col-span-2">
+          <label class="block text-sm font-medium">Descripción</label>
+          <textarea formControlName="descripcion" class="input w-full" rows="2" placeholder="Descripción del equipo"></textarea>
         </div>
         <div class="col-span-2">
           <label class="inline-flex items-center">
@@ -107,12 +131,18 @@ export class EquipoFormComponent implements OnInit {
     this.form = this.fb.group({
       id: [null],
       nombre: ['', [Validators.required]],
+      codigo: [''],
+      descripcion: [''],
       marcaId: [null, [Validators.required]],
       categoriaId: [null, [Validators.required]],
       modeloId: [null],
       numeroSerie: [''],
       estadoId: [null, [Validators.required]],
       ubicacionId: [null],
+      fechaAdquisicion: [null],
+      valorEstimado: [null],
+      costoCreacion: [null],
+      costoDia: [null],
       requiere_inspeccion: [false],
       activo: [true, [Validators.required]]
     });
@@ -181,12 +211,18 @@ export class EquipoFormComponent implements OnInit {
           this.form.patchValue({
             id: this.equipo.id,
             nombre: this.equipo.nombre,
+            codigo: equipoData.codigo || '',
+            descripcion: equipoData.descripcion || '',
             marcaId: marcaId,
             categoriaId: categoriaId,
             modeloId: modeloId,
             numeroSerie: this.equipo.numeroSerie || '',
             estadoId: estadoId,
             ubicacionId: ubicacionId,
+            fechaAdquisicion: equipoData.fechaAdquisicion || null,
+            valorEstimado: equipoData.valorEstimado || null,
+            costoCreacion: equipoData.costoCreacion || null,
+            costoDia: equipoData.costoDia || null,
             requiere_inspeccion: !!equipoData.requiere_inspeccion,
             activo: equipoData.activo !== undefined ? equipoData.activo : true
           });
@@ -400,20 +436,23 @@ export class EquipoFormComponent implements OnInit {
     // Build a clean backend-friendly payload (snake_case, booleans, expected ID fields)
     const backendPayload: any = {
       nombre: payload.nombre,
-      descripcion: payload.descripcion || null,
-      codigo: payload.codigo || null,
-      numero_serie: payload.numero_serie ?? payload.numeroSerie ?? null,
+      descripcion: value.descripcion || null,
+      codigo: value.codigo || null,
+      numero_serie: value.numeroSerie || null,
       // also include the alternate spelling sometimes found in older APIs
-      numero_serial: payload.numero_serie ?? payload.numeroSerie ?? null,
+      numero_serial: value.numeroSerie || null,
 
       // Dates: prefer ISO without Z if backend expects LocalDateTime (strip Z)
       fecha_creacion: (payload.fecha_creacion || fechaISO).replace(/Z$/, ''),
       fecha_actualizacion: (payload.fecha_actualizacion || fechaISO).replace(/Z$/, ''),
 
+      // Fecha de adquisición (LocalDate format: YYYY-MM-DD)
+      fecha_adquisicion: value.fechaAdquisicion || null,
+
       // Numeric/monetary fields if present
-      costo_creacion: payload.costo_creacion ?? payload.costoCreacion ?? null,
-      valor_estimado: payload.valor_estimado ?? payload.valorEstimado ?? null,
-      costo_dia: payload.costo_dia ?? payload.costoDia ?? null,
+      costo_creacion: value.costoCreacion != null ? Number(value.costoCreacion) : null,
+      valor_estimado: value.valorEstimado != null ? Number(value.valorEstimado) : null,
+      costo_dia: value.costoDia != null ? Number(value.costoDia) : null,
 
       // Relaciones como IDs (snake_case)
       marca_id: payload.marca_id ?? payload.marcaId ?? payload.marca ?? null,

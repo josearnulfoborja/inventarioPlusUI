@@ -136,7 +136,7 @@ export class EquipoService {
      * @param equipo Datos actualizados del equipo
      */
     actualizarEquipo(id: number, equipo: Equipo): Observable<ApiResponse<Equipo>> {
-        return this.apiService.put<Equipo>(`${this.endpoint}/${id}`, equipo);
+        return this.apiService.put<Equipo>(`${this.endpoint}/${id}`, equipo, { withCredentials: true });
     }
 
     /**
@@ -145,7 +145,7 @@ export class EquipoService {
      * @param datos Datos parciales a actualizar
      */
     actualizarParcial(id: number, datos: Partial<Equipo>): Observable<ApiResponse<Equipo>> {
-        return this.apiService.patch<Equipo>(`${this.endpoint}/${id}`, datos);
+        return this.apiService.patch<Equipo>(`${this.endpoint}/${id}`, datos, { withCredentials: true });
     }
 
     /**
