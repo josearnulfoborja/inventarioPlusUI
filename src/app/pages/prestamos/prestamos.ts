@@ -603,6 +603,14 @@ export class Prestamos implements OnInit {
                 // eslint-disable-next-line no-console
                 console.debug('[DEBUG] GET prestamos raw array (length):', Array.isArray(raw) ? raw.length : typeof raw, raw && raw[0]);
 
+                // 🔍 DEBUG ESTADO: Mostrar el valor real del campo estado_prestamo
+                if (raw && raw.length > 0) {
+                    // eslint-disable-next-line no-console
+                    console.log('✅ Backend envía estado_prestamo:', raw[0].estado_prestamo);
+                    // eslint-disable-next-line no-console
+                    console.log('✅ Tipo:', typeof raw[0].estado_prestamo);
+                }
+
                 // Normalizar posibles variantes de nombres devueltos por el backend
                 this.prestamos = Array.isArray(raw) ? raw.map((r: any) => this.normalizePrestamo(r)) : [];
 
@@ -695,7 +703,7 @@ export class Prestamos implements OnInit {
             fechaDevolucion: r.fechaDevolucion ?? r.fecha_devolucion ?? null,
             fechaPrevista: r.fechaPrevista ?? r.fecha_prevista ?? null,
             costoTotal: r.costoTotal ?? r.costo_total ?? 0,
-            estadoPrestamo: r.estadoPrestamo ?? r.estado ?? r.status ?? null,
+            estadoPrestamo: r.estadoPrestamo ?? r.estado_prestamo ?? r.estado ?? r.status ?? null,
             estadoPrestamoId: r.estadoPrestamoId ?? r.estadoId ?? r.idEstadoPrestamo ?? r.estado_prestamo_id ?? r.estado_id ?? null,
             cliente: cliente as any,
             equipo: equipo as any,
@@ -1125,33 +1133,52 @@ export class Prestamos implements OnInit {
     // a la etiqueta cruda si no se encuentra.
     getEstadoPrestamoNombre(p: Prestamo): string {
         try {
+            console.log('🔍 getEstadoPrestamoNombre - prestamo:', {
+                estadoPrestamoId: p?.estadoPrestamoId,
+                estadoPrestamo: p?.estadoPrestamo,
+                estadosDisponibles: this.estadosPrestamo?.length
+            });
+
             // 1) Buscar por id dentro de los mcodigos del grupo PRESTAMO
             if (p?.estadoPrestamoId != null) {
                 const idNum = Number(p.estadoPrestamoId);
                 const foundById = (this.estadosPrestamo || []).find(e => Number(e.id) === idNum);
-                if (foundById && foundById.nombre) return foundById.nombre;
+                if (foundById && foundById.nombre) {
+                    console.log('✅ Encontrado por ID:', foundById.nombre);
+                    return foundById.nombre;
+                }
+                console.log('⚠️ No encontrado por ID:', idNum);
             }
 
             // 2) Si llega un código o etiqueta, normalizar y buscar por codigo
             if (p?.estadoPrestamo) {
                 const code = this.normalizeToCodigo(p.estadoPrestamo as any);
+                console.log('🔍 Buscando por código:', code);
                 if (code) {
                     const foundByCode = (this.estadosPrestamo || []).find(e => String(e.codigo) === code);
-                    if (foundByCode && foundByCode.nombre) return foundByCode.nombre;
+                    if (foundByCode && foundByCode.nombre) {
+                        console.log('✅ Encontrado por código:', foundByCode.nombre);
+                        return foundByCode.nombre;
+                    }
+                    console.log('⚠️ No encontrado por código:', code);
                 }
 
                 // 3) Buscar por nombre exacto (por si backend ya envía el nombre legible)
                 const byName = (this.estadosPrestamo || []).find(e => String(e.nombre).toLowerCase() === String(p.estadoPrestamo).toLowerCase());
-                if (byName && byName.nombre) return byName.nombre;
+                if (byName && byName.nombre) {
+                    console.log('✅ Encontrado por nombre:', byName.nombre);
+                    return byName.nombre;
+                }
 
-                // 4) Fallback: no mostrar valores fuera del grupo 'PRESTAMO'
-                // Sólo devolvemos estados que estén definidos en mcodigos para PRESTAMO.
-                return '-';
+                // 4) Si no se encuentra en mcodigos, mostrar el valor crudo del backend
+                console.log('⚠️ Estado no encontrado en mcodigos, mostrando valor crudo:', p.estadoPrestamo);
+                return String(p.estadoPrestamo);
             }
         } catch (err) {
             // eslint-disable-next-line no-console
             console.debug('[DEBUG] getEstadoPrestamoNombre error', err);
         }
+        console.log('❌ Sin estadoPrestamoId ni estadoPrestamo');
         return '-';
     }
 

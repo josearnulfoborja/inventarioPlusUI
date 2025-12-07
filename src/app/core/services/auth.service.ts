@@ -50,41 +50,35 @@ export class AuthService {
                 
                 console.log('User data to store:', userData);
                 
-                // Si no hay userData en la respuesta, obtenerlo del backend después del login
+                // Si no hay userData en la respuesta, crear desde el JWT
                 if (!userData) {
-                    console.log('⚠️ No user data in login response, will fetch from /api/usuarios/me');
-                    // Hacer una petición adicional para obtener los datos del usuario
-                    this.fetchUserProfile().subscribe({
-                        next: (user) => {
-                            console.log('✅ User profile fetched:', user);
-                            if (user) {
-                                localStorage.setItem(USER_KEY, JSON.stringify(user));
-                            }
-                        },
-                        error: (err) => {
-                            console.error('❌ Error fetching user profile:', err);
-                            // Crear usuario básico como fallback
-                            try {
-                                const payload = this.decodeToken(token!);
-                                console.log('JWT payload:', payload);
-                                
-                                if (payload?.sub) {
-                                    const fallbackUser = {
-                                        username: payload.sub,
-                                        nombre: payload.sub,
-                                        rol: 'Usuario'
-                                    };
-                                    console.log('Created fallback user data:', fallbackUser);
-                                    localStorage.setItem(USER_KEY, JSON.stringify(fallbackUser));
-                                }
-                            } catch (e) {
-                                console.error('Error decoding JWT:', e);
-                            }
+                    console.log('⚠️ No user data in login response, creating from JWT token');
+                    try {
+                        const payload = this.decodeToken(token!);
+                        console.log('JWT payload:', payload);
+                        
+                        if (payload?.sub) {
+                            userData = {
+                                username: payload.sub,
+                                nombre: payload.sub,
+                                rol: payload.rol || payload.role || 'Usuario',
+                                // Añadir otros campos del JWT si existen
+                                idUsuario: payload.idUsuario || payload.userId || payload.id
+                            };
+                            console.log('✅ Created user data from JWT:', userData);
+                        } else {
+                            console.error('❌ No subject (sub) in JWT token');
                         }
-                    });
-                } else {
+                    } catch (e) {
+                        console.error('❌ Error decoding JWT:', e);
+                    }
+                }
+                
+                if (userData) {
                     localStorage.setItem(USER_KEY, JSON.stringify(userData));
-                    console.log('User data saved to localStorage');
+                    console.log('✅ User data saved to localStorage:', userData);
+                } else {
+                    console.error('❌ No user data could be created');
                 }
             })
         );

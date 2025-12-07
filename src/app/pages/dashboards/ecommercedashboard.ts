@@ -287,6 +287,7 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
 
     loadStats() {
         console.log('🔄 Cargando estadísticas del dashboard...');
+        console.log('📍 Verificando conectividad con el backend...');
         
         // Usar el servicio de reportes para obtener todas las estadísticas en una sola llamada
         this.reporteService.getDashboardStats().subscribe({
@@ -306,11 +307,16 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
                     // Cargar detalles adicionales
                     this.loadDetallesAdicionales();
                     this.loadEquiposPorEstado();
+                } else {
+                    console.warn('⚠️ La respuesta del servidor no contiene datos');
+                    this.loadStatsIndividual();
                 }
             },
             error: (error) => {
                 console.error('⚠️ El endpoint de estadísticas no está disponible, usando método alternativo');
-                console.error('Error:', error);
+                console.error('📛 Error completo:', error);
+                console.error('📛 Estado HTTP:', error.status);
+                console.error('📛 URL:', error.url);
                 // Fallback: cargar estadísticas individualmente
                 this.loadStatsIndividual();
             }
@@ -334,11 +340,17 @@ export class EcommerceDashboard implements OnInit, OnDestroy {
             next: (responses) => {
                 console.log('✅ Respuestas recibidas:', responses);
                 
-                this.stats.clientes = responses.clientes.pagination?.totalItems || 0;
-                this.stats.equipos = responses.equipos.pagination?.totalItems || 0;
-                this.stats.usuarios = responses.usuarios.pagination?.totalItems || 0;
-                this.stats.prestamos = responses.prestamos.pagination?.totalItems || 0;
-                this.stats.evaluaciones = responses.evaluaciones.pagination?.totalItems || 0;
+                // Las respuestas pueden venir como arrays directos o con pagination
+                this.stats.clientes = responses.clientes.pagination?.totalItems || 
+                                     (Array.isArray(responses.clientes) ? responses.clientes.length : 0);
+                this.stats.equipos = responses.equipos.pagination?.totalItems || 
+                                    (Array.isArray(responses.equipos) ? responses.equipos.length : 0);
+                this.stats.usuarios = responses.usuarios.pagination?.totalItems || 
+                                     (Array.isArray(responses.usuarios) ? responses.usuarios.length : 0);
+                this.stats.prestamos = responses.prestamos.pagination?.totalItems || 
+                                      (Array.isArray(responses.prestamos) ? responses.prestamos.length : 0);
+                this.stats.evaluaciones = responses.evaluaciones.pagination?.totalItems || 
+                                         (Array.isArray(responses.evaluaciones) ? responses.evaluaciones.length : 0);
                 this.stats.marcas = Array.isArray(responses.marcas) ? responses.marcas.length : 0;
                 this.stats.modelos = Array.isArray(responses.modelos) ? responses.modelos.length : 0;
                 this.stats.tiposEquipo = Array.isArray(responses.tiposEquipo) ? responses.tiposEquipo.length : 0;
